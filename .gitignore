@@ -1,0 +1,14 @@
+# Arquivos compilados do Python (lixo)
+__pycache__/
+*.pyc
+
+# Ambiente virtual local (se você tiver criado)
+venv/
+env/
+
+# Variáveis de ambiente (se usar no futuro)
+.env
+
+# Pastas de IDEs
+.vscode/
+.idea/
