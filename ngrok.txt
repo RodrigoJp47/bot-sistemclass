@@ -1,3 +1,0 @@
-ngrok http 5000
-python bot.py
-python disparador.py
