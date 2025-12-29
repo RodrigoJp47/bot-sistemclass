@@ -113,6 +113,7 @@ def webhook():
                 "não estamos disponíveis",  # <--- Adicionado
                 "responderemos assim que possível", # <--- Adicionado
                 "agradecemos sua mensagem", # <--- Adicionado
+                "agradecemos o seu contato",
                 "toque em",
                 "clique no link",
                 "protocolo",
