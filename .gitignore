@@ -12,3 +12,5 @@ env/
 # Pastas de IDEs
 .vscode/
 .idea/
+
+*.xlsx

@@ -102,7 +102,29 @@ def webhook():
             if not texto_cliente: continue
 
             print(f"--- [CLIENTE] {sender}: {texto_cliente}")
+            # --- BLOCO DE SEGURANÇA: FILTRO ANTI-ROBÔ ---
+            # --- BLOCO DE SEGURANÇA: FILTRO ANTI-ROBÔ (ATUALIZADO) ---
+            termos_de_robo = [
+                "horário de atendimento", 
+                "não responda", 
+                "mensagem automática", 
+                "digite a opção", 
+                "estamos ausentes",
+                "não estamos disponíveis",  # <--- Adicionado
+                "responderemos assim que possível", # <--- Adicionado
+                "agradecemos sua mensagem", # <--- Adicionado
+                "toque em",
+                "clique no link",
+                "protocolo",
+                "atendimento encerrado",
+                "bem-vindo ao"
+            ]
 
+            # Verifica se parece robô (converte para minúsculo para comparar)
+            if any(termo in texto_cliente.lower() for termo in termos_de_robo):
+                print(f"🛑 Mensagem ignorada (Parece robô): {texto_cliente[:50]}...")
+                continue # Pula para a próxima mensagem e NÃO chama o Gemini
+            # ----------------------------------------------------
             # Memória
             if sender not in historico_conversas:
                 historico_conversas[sender] = []
