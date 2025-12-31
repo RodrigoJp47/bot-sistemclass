@@ -155,7 +155,7 @@ def webhook():
             ROTEIRO DE CONVERSA (Siga esta estrutura):
             
             ETAPA 1 (Apresentação Poderosa):
-            Se perguntarem "Quem é?" ou "Quem fala?", responda com estas partes:
+            Se perguntarem "Quem é?", "Quem fala?", ou demonstrar interesse responda com estas partes:
             
             1. "Olá! Eu sou a Maria Clara, especialista aqui da SistemClass. Somos um sistema exclusivo para BPO Financeiro."
             
