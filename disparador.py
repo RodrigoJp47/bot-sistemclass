@@ -42,13 +42,16 @@ def enviar_disparos():
 
     # Loop linha por linha
     for index, linha in df.iterrows():
-        # --- NOVO: VERIFICA SE JÁ FOI ENVIADO ---
+        # 1. LEITURA DOS DADOS (ISSO VEM PRIMEIRO)
+        nome = str(linha.get('Nome', 'Cliente')) 
+        telefone_bruto = str(linha.get('Telefone', ''))
+
+        # 2. AGORA SIM, VERIFICA O STATUS
         status_atual = str(linha.get('Status', '')).strip().lower()
         if status_atual == 'enviado':
             print(f" -> Pulando {nome}: Já consta como Enviado.")
             continue
-        nome = str(linha.get('Nome', 'Cliente')) 
-        telefone_bruto = str(linha.get('Telefone', ''))
+        
 
         # Limpeza do telefone
         telefone = "".join(filter(str.isdigit, telefone_bruto))
