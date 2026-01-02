@@ -429,15 +429,21 @@ def webhook():
                     arquivo_gemini = genai.upload_file(caminho_audio, mime_type="audio/mp3")
                     
                     prompt_audio = f"""
-                    O cliente enviou um áudio. ESCUTE COM ATENÇÃO PRIORITÁRIA.
-
-                    1. IDENTIFIQUE A PERGUNTA EXATA: O cliente perguntou Preço? Funcionalidade? Ou só confirmou algo?
-                    2. SE PERGUNTOU PREÇO/VALOR: Pare tudo e responda direto: "O valor é R$139/mês (Financeiro) ou R$189/mês (Completo)."
-                    3. NÃO ENROLE: Se a pergunta for curta, a resposta tem que ser curta e direta. Não use o discurso motivacional agora.
-                    4. Se for confirmação ("Agendado", "Beleza"), apenas encerre.
+                    Você é Maria Clara. O cliente mandou este áudio.
                     
-                    Use esta base apenas para consultar os dados (não repita textos longos):
+                    REGRA DE OURO (SISTEMA ANTI-FALHA):
+                    - NÃO descreva o áudio. NÃO escreva "O cliente perguntou...". NÃO coloque "1. Identificação...".
+                    - APENAS RESPONDA DIRETAMENTE AO CLIENTE, como se fosse uma conversa natural no WhatsApp.
+                    
+                    INSTRUÇÕES DE RESPOSTA:
+                    1. Se perguntou PREÇO: Responda APENAS: "O valor é R$139/mês (Financeiro) ou R$189/mês (Completo)."
+                    2. Se perguntou TESTE GRÁTIS: Responda: "Com certeza! Você tem 7 dias gratuitos. Segue o link: {LINK_LANDING}"
+                    3. Se for outra dúvida: Responda a dúvida de forma curta e simpática.
+                    
+                    Base de conhecimento para consulta:
                     {INFO_PRODUTO}
+                    
+                    Sua resposta para o cliente (apenas o texto final):
                     """
                     
                     response = model.generate_content([prompt_audio, arquivo_gemini])
