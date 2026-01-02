@@ -294,7 +294,10 @@ GEMINI_API_KEY = "AIzaSyAM2Z3HyOcANDfRq1vr5ROX5QaX8LMBlBg"
 # ==============================================================================
 NOME_EMPRESA = "SistemClass"
 LINK_LANDING = "https://sistemclass.com.br"
-LINK_AGENDA = "https://calendly.com/rodriabreu/30min"
+
+# ✅ CORREÇÃO DEFINITIVA DO LINK:
+# Usamos o link do seu PERFIL. Isso evita o erro 404 de links quebrados.
+LINK_AGENDA = "https://calendly.com/rodriabreu"
 
 # ==============================================================================
 # BASE DE CONHECIMENTO
@@ -321,13 +324,11 @@ PREÇOS (Use apenas se perguntarem):
 """
 
 genai.configure(api_key=GEMINI_API_KEY)
-# Mantendo o modelo Flash
 model = genai.GenerativeModel('gemini-flash-latest') 
 
 historico_conversas = {} 
 mapa_ids = {}
 
-# --- FUNÇÃO AUXILIAR PARA BAIXAR ÁUDIO ---
 def baixar_audio(url_audio):
     try:
         nome_arquivo = f"temp_{uuid.uuid4()}.mp3"
@@ -341,7 +342,6 @@ def baixar_audio(url_audio):
         print(f"Erro download áudio: {e}")
         return None
 
-# --- FUNÇÃO AUXILIAR PARA ENVIAR MENSAGEM ---
 def enviar_mensagem(telefone, texto):
     url = "https://www.wasenderapi.com/api/send-message"
     phone = telefone.split('@')[0]
@@ -390,7 +390,6 @@ def webhook():
 
             tipo_msg = msg.get('messageType') or msg.get('type')
             msg_content = msg.get('message', {})
-            
             texto_cliente = ''
             caminho_audio = None
             eh_audio = False
@@ -407,7 +406,6 @@ def webhook():
                 elif 'messageBody' in msg: texto_cliente = msg['messageBody']
                 elif 'body' in msg: texto_cliente = msg['body']
                 elif 'message' in msg: texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
-
                 if not texto_cliente: continue
 
                 if texto_cliente.lower().strip() in ['reset', 'limpar', '/reset', '/limpar']:
@@ -427,7 +425,8 @@ def webhook():
             else: historico_conversas[sender].append(f"Cliente: [Enviou um áudio]")
             
             memoria = "\n".join(historico_conversas[sender][-15:]) 
-
+            
+            # Garante que o link não tenha espaços extras
             link_agenda_limpo = LINK_AGENDA.strip()
 
             instrucoes_base = f"""
@@ -439,15 +438,15 @@ def webhook():
             SUA MISSÃO:
             Gerar desejo pelos DASHBOARDS e levar para Reunião/Teste.
             
+            DIRETRIZES TÉCNICAS (IMPORTANTÍSSIMO):
+            1. NÃO use formatação Markdown nos links. NUNCA faça isso: [Link](url).
+            2. Envie o link puro e simples. Exemplo: "Acesse aqui: https://..."
+            3. Isso evita que o link quebre no WhatsApp.
+
             DIRETRIZES DE RESPOSTA:
-            1. PRIMEIRA ABORDAGEM (Se perguntarem "Quem é?"):
-               - Apresente o SistemClass: Inteligência (Dashboards de Valuation/DRE) + Organização (Tarefas) + Escala (Multi-CNPJ).
-               - Foque no VALOR dos Dashboards.
-
-            2. REGRA DE ENCERRAMENTO:
-               - Se o cliente disser explicitamente: "Agendado", "Já agendei", "Ok obrigado".
-               - PARE DE VENDER. Agradeça e encerre.
-
+            - PRIMEIRA ABORDAGEM: Apresente o SistemClass (Dashboards + Tarefas + Multi-CNPJ).
+            - ENCERRAMENTO: Se o cliente disser "Agendado" ou "Ok", APENAS agradeça e encerre.
+            
             LINKS:
             - Cadastro: {LINK_LANDING}
             - Agenda: {link_agenda_limpo}
@@ -464,15 +463,11 @@ def webhook():
                     print(f"--- [GEMINI] Processando áudio...")
                     arquivo_gemini = genai.upload_file(caminho_audio, mime_type="audio/mp3")
                     
-                    # --- AQUI ESTÁ A CORREÇÃO MÁGICA ---
-                    # Instruímos a IA a ignorar o histórico de "tchau" se o áudio for uma pergunta nova.
                     prompt_audio = f"""
-                    ANALISE ESTE ÁUDIO COM ATENÇÃO MÁXIMA.
-                    
-                    1. O cliente pode estar fazendo uma PERGUNTA NOVA (sobre Preço, Funcionalidade, etc).
-                    2. Se ele perguntar algo, IGNORE o fato de que a conversa estava encerrada no histórico e RESPONDA a dúvida.
-                    3. Se ele perguntar PREÇO: Responda R$139 (Financeiro) ou R$189 (Completo).
-                    4. SÓ encerre a conversa se o áudio for confirmando o agendamento (Ex: "Beleza, combinado").
+                    ANALISE ESTE ÁUDIO COM ATENÇÃO.
+                    1. Se for PERGUNTA NOVA, responda (Preço, Funcionalidade).
+                    2. Se for CONFIRMAÇÃO (ex: "Agendado"), encerre a conversa.
+                    3. NÃO use Markdown nos links. Envie links puros.
                     
                     Base de conhecimento:
                     {INFO_PRODUTO}
