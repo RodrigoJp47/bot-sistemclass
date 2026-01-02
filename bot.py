@@ -433,7 +433,15 @@ def webhook():
             1. Se for áudio, ESCUTE com atenção o tom de voz e a dúvida.
             2. Seja cordial, mas vá direto ao ponto da "dor" (produtividade/Multi-CNPJ).
             3. Use emojis moderadamente.
-            4. SEMPRE termine com uma pergunta.
+            
+            🔴 REGRA CRÍTICA DE ENCERRAMENTO (LEIA COM ATENÇÃO):
+            - Se o cliente disser: "Agendado", "Já agendei", "Ok obrigado", "Vou ver", "Vou agendar" ou "Obrigado".
+            - AÇÃO: NÃO FAÇA MAIS PERGUNTAS DE VENDAS.
+            - RESPOSTA: Apenas agradeça, confirme e encerre a conversa.
+            - Exemplo: "Perfeito! Te aguardo na reunião. Um abraço!" (E nada mais).
+
+            🟢 REGRA PARA FLUXO NORMAL (Se o cliente ainda tiver dúvidas):
+            - Termine com uma pergunta para engajar.
 
             CENÁRIOS COMUNS:
             - "Já tenho sistema": Diga "Ótimo, integramos com eles! Mas o SistemClass centraliza tudo (Multi-CNPJ) num login só."
