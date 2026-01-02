@@ -350,13 +350,19 @@ def webhook():
             caminho_audio = None
             eh_audio = False
 
-            # --- LÓGICA DE ÁUDIO ---
+            # --- LÓGICA DE ÁUDIO (BLOQUEIO EDUCADO) ---
             if tipo_msg == 'audio' or 'audioMessage' in msg_content:
-                eh_audio = True
-                print(f"--- [CLIENTE] Áudio recebido de {sender}")
-                url_media = (msg_content.get('audioMessage', {}).get('url') or msg.get('mediaUrl') or msg_content.get('url'))
-                if url_media: caminho_audio = baixar_audio(url_media)
-                else: continue 
+                print(f"--- [CLIENTE] Áudio recebido de {sender} (Não processado por segurança)")
+                
+                # Resposta padrão imediata
+                msg_bloqueio = "Desculpe, ainda não consigo ouvir áudios por aqui. 🎧 Poderia escrever sua dúvida por favor? Assim consigo te responder rapidinho! 😊"
+                enviar_mensagem(sender, msg_bloqueio)
+                
+                # Salva no histórico para não perder o fio da meada
+                if sender not in historico_conversas: historico_conversas[sender] = []
+                historico_conversas[sender].append(f"Rodrigo: {msg_bloqueio}")
+                
+                continue # Pula o resto e espera o cliente digitar 
 
             # --- LÓGICA DE TEXTO ---
             else:
@@ -422,39 +428,9 @@ def webhook():
 
             try:
                 time.sleep(3) 
-                resposta_bot = ""
-                
-                if eh_audio and caminho_audio:
-                    print(f"--- [GEMINI] Processando áudio...")
-                    arquivo_gemini = genai.upload_file(caminho_audio, mime_type="audio/mp3")
-                    
-                    prompt_audio = f"""
-                    Você é Maria Clara. O cliente mandou este áudio.
-                    
-                    REGRA DE OURO (SISTEMA ANTI-FALHA):
-                    - NÃO descreva o áudio. NÃO escreva "O cliente perguntou...". NÃO coloque "1. Identificação...".
-                    - APENAS RESPONDA DIRETAMENTE AO CLIENTE, como se fosse uma conversa natural no WhatsApp.
-                    
-                    INSTRUÇÕES DE RESPOSTA:
-                    1. Se perguntou PREÇO: Responda APENAS: "O valor é R$139/mês (Financeiro) ou R$189/mês (Completo)."
-                    2. Se perguntou TESTE GRÁTIS: Responda: "Com certeza! Você tem 7 dias gratuitos. Segue o link: {LINK_LANDING}"
-                    3. Se for outra dúvida: Responda a dúvida de forma curta e simpática.
-                    
-                    Base de conhecimento para consulta:
-                    {INFO_PRODUTO}
-                    
-                    Sua resposta para o cliente (apenas o texto final):
-                    """
-                    
-                    response = model.generate_content([prompt_audio, arquivo_gemini])
-                    resposta_bot = response.text.strip()
-                    try: os.remove(caminho_audio)
-                    except: pass
-
-                else:
-                    instrucoes_texto = instrucoes_base + "\nResponda como Maria Clara:"
-                    response = model.generate_content(instrucoes_texto)
-                    resposta_bot = response.text.strip()
+                instrucoes_texto = instrucoes_base + "\nResponda como Maria Clara:"
+                response = model.generate_content(instrucoes_texto)
+                resposta_bot = response.text.strip()
 
                 print(f"--- [RODRIGO] {resposta_bot}")
                 historico_conversas[sender].append(f"Rodrigo: {resposta_bot}")
