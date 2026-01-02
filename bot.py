@@ -429,16 +429,14 @@ def webhook():
                     arquivo_gemini = genai.upload_file(caminho_audio, mime_type="audio/mp3")
                     
                     prompt_audio = f"""
-                    Você é Maria Clara, da SistemClass.
-                    O cliente acabou de te enviar esse áudio.
+                    O cliente enviou um áudio. ESCUTE COM ATENÇÃO PRIORITÁRIA.
+
+                    1. IDENTIFIQUE A PERGUNTA EXATA: O cliente perguntou Preço? Funcionalidade? Ou só confirmou algo?
+                    2. SE PERGUNTOU PREÇO/VALOR: Pare tudo e responda direto: "O valor é R$139/mês (Financeiro) ou R$189/mês (Completo)."
+                    3. NÃO ENROLE: Se a pergunta for curta, a resposta tem que ser curta e direta. Não use o discurso motivacional agora.
+                    4. Se for confirmação ("Agendado", "Beleza"), apenas encerre.
                     
-                    AÇÃO OBRIGATÓRIA:
-                    1. Escute o áudio.
-                    2. Se ele perguntar algo, RESPONDA como Maria Clara.
-                    3. Se for confirmação de agendamento, agradeça e encerre.
-                    4. Se for mudo ou erro, diga: "Desculpe, o áudio falhou aqui. Consegue escrever?"
-                    
-                    Base de conhecimento:
+                    Use esta base apenas para consultar os dados (não repita textos longos):
                     {INFO_PRODUTO}
                     """
                     
