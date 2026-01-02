@@ -233,6 +233,7 @@ import google.generativeai as genai
 import time
 import os
 import uuid
+import json # Adicionado para garantir estabilidade
 
 app = Flask(__name__)
 
@@ -247,11 +248,11 @@ GEMINI_API_KEY = "AIzaSyAM2Z3HyOcANDfRq1vr5ROX5QaX8LMBlBg"
 # ==============================================================================
 NOME_EMPRESA = "SistemClass"
 LINK_LANDING = "https://sistemclass.com.br"
-# Link Geral (À prova de erros 404)
+# Link Geral do Calendly (Mais seguro contra erro 404)
 LINK_AGENDA = "https://calendly.com/rodriabreu" 
 
 # ==============================================================================
-# BASE DE CONHECIMENTO
+# BASE DE CONHECIMENTO (O Cérebro da Maria Clara)
 # ==============================================================================
 INFO_PRODUTO = f"""
 RESUMO ESTRATÉGICO PARA O AGENTE:
@@ -275,8 +276,10 @@ PREÇOS (Use apenas se perguntarem):
 """
 
 genai.configure(api_key=GEMINI_API_KEY)
-# Modelo 1.5 Flash (Melhor para áudio e instruções complexas)
-model = genai.GenerativeModel('gemini-1.5-flash') 
+
+# ✅ VOLTAMOS PARA O MODELO ESTÁVEL (O "TANQUE DE GUERRA")
+# Se o 1.5 estava falhando, este aqui vai garantir que o texto saia.
+model = genai.GenerativeModel('gemini-flash-latest') 
 
 historico_conversas = {} 
 mapa_ids = {}
@@ -328,6 +331,7 @@ def webhook():
         if not messages: return jsonify({"status": "ignored"}), 200
 
         for msg in messages:
+            # Filtro de mensagens enviadas por mim mesmo (Isso ignora o disparo do Disparador, o que é CORRETO)
             key = msg.get('key', {})
             if key.get('fromMe') or msg.get('fromMe'): continue
 
@@ -346,6 +350,7 @@ def webhook():
             caminho_audio = None
             eh_audio = False
 
+            # --- LÓGICA DE ÁUDIO ---
             if tipo_msg == 'audio' or 'audioMessage' in msg_content:
                 eh_audio = True
                 print(f"--- [CLIENTE] Áudio recebido de {sender}")
@@ -353,6 +358,7 @@ def webhook():
                 if url_media: caminho_audio = baixar_audio(url_media)
                 else: continue 
 
+            # --- LÓGICA DE TEXTO ---
             else:
                 if 'conversation' in msg: texto_cliente = msg['conversation']
                 elif 'messageBody' in msg: texto_cliente = msg['messageBody']
@@ -360,25 +366,31 @@ def webhook():
                 elif 'message' in msg: texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
                 if not texto_cliente: continue
 
+                # COMANDO DE RESET
                 if texto_cliente.lower().strip() in ['reset', 'limpar', '/reset', '/limpar']:
                     historico_conversas[sender] = []
                     print(f"--- [RESET] Memória limpa para {sender}")
                     enviar_mensagem(sender, "♻️ Memória reiniciada! Pode começar um novo teste.")
                     continue 
                 
+                # Filtros Anti-Robô
                 termos_de_robo = ["horário de atendimento", "não responda", "mensagem automática", "digite a opção"]
                 if any(termo in texto_cliente.lower() for termo in termos_de_robo): continue
                 
                 print(f"--- [CLIENTE] {sender}: {texto_cliente}")
 
+            # Atualiza memória
             if sender not in historico_conversas: historico_conversas[sender] = []
             
             if not eh_audio: historico_conversas[sender].append(f"Cliente: {texto_cliente}")
             else: historico_conversas[sender].append(f"Cliente: [Enviou um áudio]")
             
             memoria = "\n".join(historico_conversas[sender][-15:]) 
+            
+            # Limpa o link
             link_agenda_limpo = LINK_AGENDA.strip()
 
+            # --- O PROMPT ---
             instrucoes_base = f"""
             {INFO_PRODUTO}
 
@@ -424,7 +436,7 @@ def webhook():
                     1. Escute o áudio.
                     2. Se ele perguntar algo, RESPONDA como Maria Clara.
                     3. Se for confirmação de agendamento, agradeça e encerre.
-                    4. Se for mudo, diga: "Desculpe, o áudio falhou. Consegue escrever?"
+                    4. Se for mudo ou erro, diga: "Desculpe, o áudio falhou aqui. Consegue escrever?"
                     
                     Base de conhecimento:
                     {INFO_PRODUTO}
