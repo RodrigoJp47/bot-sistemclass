@@ -276,7 +276,8 @@ PREÇOS (Use apenas se perguntarem ou no fechamento):
 """
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-flash-latest')
+# Mantendo o modelo que funciona para você
+model = genai.GenerativeModel('gemini-flash-latest') 
 
 historico_conversas = {} 
 mapa_ids = {}
@@ -294,6 +295,22 @@ def baixar_audio(url_audio):
     except Exception as e:
         print(f"Erro download áudio: {e}")
         return None
+
+# --- FUNÇÃO AUXILIAR PARA ENVIAR MENSAGEM ---
+def enviar_mensagem(telefone, texto):
+    url = "https://www.wasenderapi.com/api/send-message"
+    phone = telefone.split('@')[0]
+    if not phone.startswith('+'): phone = f"+{phone}"
+
+    payload = {"to": phone, "text": texto}
+    headers = {
+        "Authorization": f"Bearer {WASENDER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    try:
+        requests.post(url, json=payload, headers=headers)
+    except Exception as e:
+        print(f"Erro ao enviar msg: {e}")
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -347,8 +364,6 @@ def webhook():
                 eh_audio = True
                 print(f"--- [CLIENTE] Áudio recebido de {sender}")
                 
-                # Tenta pegar a URL do áudio (Varia conforme a API que você usa no WaSender/Evolution)
-                # Verifica lugares comuns onde a URL costuma vir
                 url_media = (
                     msg_content.get('audioMessage', {}).get('url') or 
                     msg.get('mediaUrl') or 
@@ -359,7 +374,7 @@ def webhook():
                     caminho_audio = baixar_audio(url_media)
                 else:
                     print("--- [ERRO] Não encontrei a URL do áudio no JSON.")
-                    continue # Pula se não tiver URL
+                    continue 
 
             # 2. É Texto?
             else:
@@ -370,6 +385,13 @@ def webhook():
                     texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
 
                 if not texto_cliente: continue
+
+                # --- COMANDO DE RESET (PARA TESTES) ---
+                if texto_cliente.lower().strip() in ['/reset', '/limpar', 'limpar memoria']:
+                    historico_conversas[sender] = []
+                    print(f"--- [RESET] Memória limpa para {sender}")
+                    enviar_mensagem(sender, "♻️ Memória reiniciada! Pode começar um novo teste.")
+                    continue # Pula o resto e espera a próxima mensagem
                 
                 # Filtro Anti-Robô (Só aplica para texto)
                 termos_de_robo = [
@@ -447,8 +469,10 @@ def webhook():
                     resposta_bot = response.text.strip()
                     
                     # 3. Limpeza
-                    os.remove(caminho_audio) # Apaga do disco local
-                    # (Opcional: O arquivo no servidor do Google expira sozinho em 48h, mas para produção massiva é bom gerenciar)
+                    try:
+                        os.remove(caminho_audio)
+                    except:
+                        pass
 
                 else:
                     # --- FLUXO DE TEXTO ---
@@ -458,17 +482,7 @@ def webhook():
                 print(f"--- [RODRIGO] {resposta_bot}")
                 historico_conversas[sender].append(f"Rodrigo: {resposta_bot}")
 
-                # Envio da resposta (Sempre Texto por enquanto)
-                url = "https://www.wasenderapi.com/api/send-message"
-                phone = sender.split('@')[0]
-                if not phone.startswith('+'): phone = f"+{phone}"
-
-                payload = {"to": phone, "text": resposta_bot}
-                headers = {
-                    "Authorization": f"Bearer {WASENDER_API_KEY}",
-                    "Content-Type": "application/json"
-                }
-                requests.post(url, json=payload, headers=headers)
+                enviar_mensagem(sender, resposta_bot)
 
             except Exception as e_api:
                 print(f"--- [ERRO PROCESSAMENTO] {e_api}")
