@@ -65,10 +65,10 @@ def enviar_disparos():
         # --- AJUSTE INTELIGENTE DE NOME ---
         if nome.lower() == "desconhecido":
             # Se não tem nome, usa saudação genérica
-            mensagem = "Olá, tudo bem? Peguei seu contato no grupo de Bpo. Desenvolvemos uma ferramenta que pode ajudar e muito na sua operação. Posso te aprentar? Será bem rápido."
+            mensagem = "Olá, tudo bem? Aqui é da SistemClass. Você trabalha como BPO financeiro? Desenvolvemos uma ferramenta que pode ajudar e muito na sua operação e fazer muita diferença na sua entrega. Posso te apresentar? Será bem rápido."
         else:
             # Se tem nome, usa o nome da pessoa
-            mensagem = f"Olá {nome}, tudo bem? Peguei seu contato no grupo de Bpo. Desenvolvemos uma ferramenta que pode ajudar e muito na sua operação. Posso te aprentar? Será bem rápido."
+            mensagem = f"Olá {nome}, tudo bem? Aqui é da SistemClass. Você trabalha como BPO financeiro? Desenvolvemos uma ferramenta que pode ajudar e muito na sua operação e fazer muita diferença na sua entrega. Posso te apresentar? Será bem rápido."
 
         payload = {
             "to": telefone,
