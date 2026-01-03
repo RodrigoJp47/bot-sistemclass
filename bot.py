@@ -251,6 +251,17 @@ LINK_LANDING = "https://sistemclass.com.br"
 # Link Geral do Calendly (Mais seguro contra erro 404)
 LINK_AGENDA = "https://calendly.com/rodriabreu" 
 
+# --- CONFIGURAÇÃO DE TRANSBORDO ---
+# Lista de números que a IA não deve mais responder (Memória Volátil)
+clientes_pausados = []
+
+# Seu número pessoal para receber o aviso (formato internacional sem +)
+# Exemplo: 5531999999999
+NUMERO_ADMIN = "5531993413530" 
+
+# Palavras que ativam o modo humano
+PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "pessoa"]
+
 # ==============================================================================
 # BASE DE CONHECIMENTO (O Cérebro da Maria Clara)
 # ==============================================================================
@@ -382,6 +393,38 @@ def webhook():
                 # Filtros Anti-Robô
                 termos_de_robo = ["horário de atendimento", "não responda", "mensagem automática", "digite a opção"]
                 if any(termo in texto_cliente.lower() for termo in termos_de_robo): continue
+                # ==============================================================
+                # INICIO DA LÓGICA DE TRANSBORDO (HUMANO)
+                # ==============================================================
+                
+                telefone_limpo = sender.split('@')[0]
+                mensagem_lower = texto_cliente.lower()
+
+                # 1. VERIFICA SE JÁ ESTÁ NA LISTA DE PAUSADOS
+                if telefone_limpo in clientes_pausados:
+                    print(f"--- [PAUSADO] Ignorando {telefone_limpo} (Aguardando Humano)")
+                    continue # Pula para a próxima mensagem e não aciona o Gemini
+
+                # 2. VERIFICA SE O CLIENTE PEDIU HUMANO AGORA
+                if any(palavra in mensagem_lower for palavra in PALAVRAS_CHAVE):
+                    print(f"--- [TRANSBORDO] Cliente {telefone_limpo} pediu humano.")
+                    
+                    # A) Adiciona na lista negra (memória)
+                    clientes_pausados.append(telefone_limpo)
+                    
+                    # B) Avisa o Cliente (Usando sua função existente)
+                    msg_cliente = "Entendido. Um especialista humano vai seguir com seu atendimento a partir de agora. Aguarde um momento! 👨‍💻"
+                    enviar_mensagem(sender, msg_cliente)
+                    
+                    # C) Avisa VOCÊ (Admin) (Usando sua função existente)
+                    msg_admin = f"🚨 ALERTA DE TRANSBORDO!\nCliente: {telefone_limpo}\nDisse: {texto_cliente}\n\nEntre no WhatsApp para assumir!"
+                    enviar_mensagem(NUMERO_ADMIN, msg_admin)
+                    
+                    continue # Encerra aqui e não chama o Gemini
+                
+                # ==============================================================
+                # FIM DA LÓGICA DE TRANSBORDO
+                # ==============================================================
                 
                 print(f"--- [CLIENTE] {sender}: {texto_cliente}")
 
