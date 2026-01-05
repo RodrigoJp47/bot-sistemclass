@@ -162,7 +162,9 @@ def enviar_disparos():
 
 Você trabalha com BPO financeiro?
 
-Lançamos um **ERP SaaS 3 em 1** que inclue Gestor de Tarefas, Multi CNPJ para controlar tudos os seus clientes em um só login, CRM, PDV e principalmente Dashboards de alta performece, com DRE, fluxo de caixa e muitos outros insights e KPIs. 
+Lançamos uma ferramenta **poderosa**, exclusiva para **Bpo**. 
+
+Nosso sistema inclue Gestor de Tarefas, Multi CNPJ para controlar tudos os seus clientes em um só login, CRM, PDV e principalmente Dashboards de alta performece, com DRE, fluxo de caixa e muitos outros insights e KPIs. 
 
 Tudo isso em tempo real, sem limite de licença, sem setup, com a sua logo e o preço que cabe no seu bolso.
 
