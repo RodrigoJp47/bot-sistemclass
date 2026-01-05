@@ -162,14 +162,11 @@ def enviar_disparos():
 
 Você trabalha com BPO financeiro?
 
-Se positivo, eu tenho uma novidade para você que irá te ajudar muito. 
+Lançamos um **ERP SaaS 3 em 1** que inclue Gestor de Tarefas, Multi CNPJ para controlar tudos os seus clientes em um só login, CRM, PDV e principalmente Dashboards de alta performece, com DRE, fluxo de caixa e muitos outros insights e KPIs. 
 
-Desenvolvemos uma ferramenta de Gestão 3 em 1. 
-Um ERP modelo SaaS. Que resolve todas as dores da operação de BPO Financeiro em um só lugar. 
-O que elimina a necessidade de contratação de várias ferramentas na sua operação . 
-Reduzindo os seus custos e otimizando o seu tempo. E sem limite mínimo de  licenças na contratação.
-Posso te apresentar? Será bem rápido. 
-Tenho certeza que vai fazer toda a diferença no seu operacional, pois foi desenvolvido exclusivamente para Bpo financeiro"""
+Tudo isso em tempo real, sem limite de licença, sem setup, com a sua logo e o preço que cabe no seu bolso.
+
+Posso te apresentar sem compromisso? Será bem rápido."""
 
         payload = {"to": telefone, "text": mensagem}
         headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
