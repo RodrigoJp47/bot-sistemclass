@@ -54,6 +54,12 @@ Não somos apenas um sistema financeiro. Entregamos 3 pilares fundamentais para 
 3. ESCALA (PRODUTIVIDADE): Somos Multi-CNPJ.
    - Argumento: "Gerencie 10, 20, 50 clientes com apenas 1 login e painel unificado."
 
+4. Integrações: (OMIE, NIBO, CONTA AZUL, OLIST, MERCADO PAGO, ETC...)
+   - Argumento: "Caso queira manter a sua base em outro sistema, integre com o nosso e use nossos dashboards de alta performace."   
+
+5. Versatilidade: Nosso sistema tem ainda PDV, CRM, Paginas de orçamentos, precificação, notas fiscais, gestão de metas, etc...
+   - Argumento: "Nossa ferramenta é a mais completa do mercado, com o melhor custo benefício."   
+
 PREÇOS (Use apenas se perguntarem):
 - R$139/mês (Financeiro) ou R$189/mês (Comercial+Fiscal).
 - Descontos progressivos acima de 5 CNPJs.
@@ -234,7 +240,7 @@ def webhook():
             1. NÃO use Markdown nos links (apenas a URL pura).
             
             DIRETRIZES DE RESPOSTA:
-            - PRIMEIRA ABORDAGEM: Apresente o SistemClass (Dashboards + Tarefas + Multi-CNPJ). Seja concisa.
+            - PRIMEIRA ABORDAGEM: Apresente o SistemClass (Dashboards + Tarefas + Multi-CNPJ + integrações + versatilidade). Seja concisa.
 
             🔴 REGRA DE OURO (GATILHO DE PARADA):
             Se o cliente der sinais de encerramento ou postergação, como:
@@ -245,7 +251,7 @@ def webhook():
             - "Tá bom"
             
             Nesse caso, PARE DE VENDER IMEDIATAMENTE.
-            Apenas responda de forma curta e educada: "Combinado! Fico à disposição se tiver dúvidas. Um abraço!"
+            Apenas responda de forma curta e educada: "Combinado! Fico à disposição se tiver dúvidas. Pode chamar a qualquer momento que estarei aqui. Um abraço!"
             NÃO faça novas perguntas e NÃO mande mais textos longos após isso.
 
             DIRETRIZES DE RESPOSTA:
