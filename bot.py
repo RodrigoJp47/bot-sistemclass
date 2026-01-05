@@ -22,7 +22,7 @@ GEMINI_API_KEY = "AIzaSyAM2Z3HyOcANDfRq1vr5ROX5QaX8LMBlBg"
 NOME_EMPRESA = "SistemClass"
 LINK_LANDING = "https://sistemclass.com.br"
 # Link Geral do Calendly (Mais seguro contra erro 404)
-LINK_AGENDA = "https://calendly.com/financlassoficial" 
+LINK_AGENDA = "https://calendly.com/sistemclassoficial" 
 
 # --- CONFIGURAÇÃO DE TRANSBORDO ---
 # Lista de números que a IA não deve mais responder (Memória Volátil)
@@ -63,6 +63,10 @@ Não somos apenas um sistema financeiro. Entregamos 3 pilares fundamentais para 
 PREÇOS (Use apenas se perguntarem):
 - R$139/mês (Financeiro) ou R$189/mês (Comercial+Fiscal).
 - Descontos progressivos acima de 5 CNPJs.
+
+🔴 REGRAS DE PERSONALIZAÇÃO (O QUE PODE E O QUE NÃO PODE):
+- LOGO DO CLIENTE: Apenas para planos ACIMA DE 5 CNPJs. (Para menos de 5, o sistema vai com a logo SistemClass padrão).
+- CORES (PALETA): NÃO fazemos personalização de cores. O layout é padrão e otimizado para performance. Se o cliente perguntar, diga educadamente que não é possível alterar as cores do sistema.
 """
 
 genai.configure(api_key=GEMINI_API_KEY)
