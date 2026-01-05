@@ -22,7 +22,7 @@ GEMINI_API_KEY = "AIzaSyAM2Z3HyOcANDfRq1vr5ROX5QaX8LMBlBg"
 NOME_EMPRESA = "SistemClass"
 LINK_LANDING = "https://sistemclass.com.br"
 # Link Geral do Calendly (Mais seguro contra erro 404)
-LINK_AGENDA = "https://calendly.com/rodriabreu" 
+LINK_AGENDA = "https://calendly.com/financlassoficial" 
 
 # --- CONFIGURAÇÃO DE TRANSBORDO ---
 # Lista de números que a IA não deve mais responder (Memória Volátil)
