@@ -256,7 +256,6 @@ def webhook():
             2. Se o cliente perguntar preço: Diga "Planos a partir de R$139 mensais com descontos para múltiplos CNPJs." e volte a oferecer o teste grátis.
 
             DIRETRIZES DE RESPOSTA:
-            - USE ESPAÇAMENTO: Nunca envie blocos de texto com mais de 3 linhas sem dar um espaço.
             - Se o cliente estiver engajado (fazendo perguntas), explique os benefícios (Dashboards, Tarefas).
             - Se o cliente perguntar preço, fale.
             - Seja concisa. Evite blocos de texto gigantes.
