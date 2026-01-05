@@ -162,9 +162,14 @@ def enviar_disparos():
 
 Você trabalha com BPO financeiro?
 
-Lançamos um **ERP SaaS 3 em 1** que substitui Trello, Planilhas e Emissores, resolvendo toda a gestão (Interna, Operacional e Estratégica) em um só lugar.
+Se positivo, eu tenho uma novidade para você que irá te ajudar muito. 
 
-Tem até Valuation e Dashboards automáticos. Posso te enviar os detalhes de como funciona?"""
+Desenvolvemos uma ferramenta de Gestão 3 em 1. 
+Um ERP modelo SaaS. Que resolve todas as dores da operação de BPO Financeiro em um só lugar. 
+O que elimina a necessidade de contratação de várias ferramentas na sua operação . 
+Reduzindo os seus custos e otimizando o seu tempo. E sem limite mínimo de  licenças na contratação.
+Posso te apresentar? Será bem rápido. 
+Tenho certeza que vai fazer toda a diferença no seu operacional, pois foi desenvolvido exclusivamente para Bpo financeiro"""
 
         payload = {"to": telefone, "text": mensagem}
         headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
