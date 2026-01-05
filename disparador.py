@@ -118,6 +118,7 @@ import requests
 import time
 import os
 import random
+from datetime import datetime
 
 API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00d462"
 API_URL = "https://www.wasenderapi.com/api/send-message"
@@ -141,6 +142,14 @@ def enviar_disparos():
     print(f"--- Iniciando campanha (Modo Curto e Direto) ---")
 
     for index, linha in df.iterrows():
+        # --- TRAVA DE HORÁRIO ---
+        agora = datetime.now()
+        hora = agora.hour # Pega só a hora (ex: 9, 14, 19)
+        
+        # Se for antes das 9h OU depois das 18h (considerando 18:00 o limite)
+        if hora < 9 or hora >= 18:
+            print(f"🚫 Fora do horário comercial ({agora.strftime('%H:%M')}). Parando o robô por segurança.")
+            break # Encerra o loop e para o programa
         nome = str(linha.get('Nome', 'Cliente')) 
         telefone_bruto = str(linha.get('Telefone', ''))
         status_atual = str(linha.get('Status', '')).strip().lower()
@@ -162,11 +171,11 @@ def enviar_disparos():
 
 Você trabalha com BPO financeiro?
 
-Lançamos uma ferramenta **poderosa**, exclusiva para **Bpo**. 
+Lançamos uma ferramenta exclusiva para atender BPO. 
 
-Nosso sistema inclue Gestor de Tarefas, Multi CNPJ para controlar tudos os seus clientes em um só login, CRM, PDV e principalmente Dashboards de alta performece, com DRE, fluxo de caixa e muitos outros insights e KPIs. 
+Nosso sistema inclui todas as funcionalidades de um sistema de gestão, com diferencial para: Gestor de Tarefas, Multi CNPJ, CRM, PDV, emissão de notas e principalmente Dashboards de alta performance, com DRE, fluxo de caixa e muitos outros insights e KPIs. 
 
-Tudo isso em tempo real, sem limite de licença, sem setup, com a sua logo e o preço que cabe no seu bolso.
+Tudo isso em tempo real, sem limite de licenças, sem setup, com a sua logo e o preço que cabe no seu bolso.
 
 Posso te apresentar sem compromisso? Será bem rápido."""
 
