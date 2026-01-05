@@ -1,11 +1,10 @@
-
-
 # from flask import Flask, request, jsonify
 # import requests
 # import google.generativeai as genai
 # import time
 # import os
 # import uuid
+# import json # Adicionado para garantir estabilidade
 
 # app = Flask(__name__)
 
@@ -20,13 +19,22 @@
 # # ==============================================================================
 # NOME_EMPRESA = "SistemClass"
 # LINK_LANDING = "https://sistemclass.com.br"
+# # Link Geral do Calendly (Mais seguro contra erro 404)
+# LINK_AGENDA = "https://calendly.com/financlassoficial" 
 
-# # ✅ CORREÇÃO DEFINITIVA DO LINK:
-# # Usamos o link do seu PERFIL. Isso evita o erro 404 de links quebrados.
-# LINK_AGENDA = "https://calendly.com/rodriabreu"
+# # --- CONFIGURAÇÃO DE TRANSBORDO ---
+# # Lista de números que a IA não deve mais responder (Memória Volátil)
+# clientes_pausados = []
+
+# # Seu número pessoal para receber o aviso (formato internacional sem +)
+# # Exemplo: 5531999999999
+# NUMERO_ADMIN = "5531993413530" 
+
+# # Palavras que ativam o modo humano
+# PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "pessoa"]
 
 # # ==============================================================================
-# # BASE DE CONHECIMENTO
+# # BASE DE CONHECIMENTO (O Cérebro da Maria Clara)
 # # ==============================================================================
 # INFO_PRODUTO = f"""
 # RESUMO ESTRATÉGICO PARA O AGENTE:
@@ -50,6 +58,9 @@
 # """
 
 # genai.configure(api_key=GEMINI_API_KEY)
+
+# # ✅ VOLTAMOS PARA O MODELO ESTÁVEL (O "TANQUE DE GUERRA")
+# # Se o 1.5 estava falhando, este aqui vai garantir que o texto saia.
 # model = genai.GenerativeModel('gemini-flash-latest') 
 
 # historico_conversas = {} 
@@ -102,6 +113,7 @@
 #         if not messages: return jsonify({"status": "ignored"}), 200
 
 #         for msg in messages:
+#             # Filtro de mensagens enviadas por mim mesmo (Isso ignora o disparo do Disparador, o que é CORRETO)
 #             key = msg.get('key', {})
 #             if key.get('fromMe') or msg.get('fromMe'): continue
 
@@ -120,13 +132,21 @@
 #             caminho_audio = None
 #             eh_audio = False
 
+#             # --- LÓGICA DE ÁUDIO (BLOQUEIO EDUCADO) ---
 #             if tipo_msg == 'audio' or 'audioMessage' in msg_content:
-#                 eh_audio = True
-#                 print(f"--- [CLIENTE] Áudio recebido de {sender}")
-#                 url_media = (msg_content.get('audioMessage', {}).get('url') or msg.get('mediaUrl') or msg_content.get('url'))
-#                 if url_media: caminho_audio = baixar_audio(url_media)
-#                 else: continue 
+#                 print(f"--- [CLIENTE] Áudio recebido de {sender} (Não processado por segurança)")
+                
+#                 # Resposta padrão imediata
+#                 msg_bloqueio = "Desculpe, ainda não consigo ouvir áudios por aqui. 🎧 Poderia escrever sua dúvida por favor? Assim consigo te responder rapidinho! 😊"
+#                 enviar_mensagem(sender, msg_bloqueio)
+                
+#                 # Salva no histórico para não perder o fio da meada
+#                 if sender not in historico_conversas: historico_conversas[sender] = []
+#                 historico_conversas[sender].append(f"Rodrigo: {msg_bloqueio}")
+                
+#                 continue # Pula o resto e espera o cliente digitar 
 
+#             # --- LÓGICA DE TEXTO ---
 #             else:
 #                 if 'conversation' in msg: texto_cliente = msg['conversation']
 #                 elif 'messageBody' in msg: texto_cliente = msg['messageBody']
@@ -134,17 +154,60 @@
 #                 elif 'message' in msg: texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
 #                 if not texto_cliente: continue
 
+#                 # COMANDO DE RESET
 #                 if texto_cliente.lower().strip() in ['reset', 'limpar', '/reset', '/limpar']:
 #                     historico_conversas[sender] = []
 #                     print(f"--- [RESET] Memória limpa para {sender}")
 #                     enviar_mensagem(sender, "♻️ Memória reiniciada! Pode começar um novo teste.")
 #                     continue 
                 
-#                 termos_de_robo = ["horário de atendimento", "não responda", "mensagem automática", "digite a opção"]
-#                 if any(termo in texto_cliente.lower() for termo in termos_de_robo): continue
+#                 # Filtros Anti-Robô (LISTA AMPLIADA)
+#                 termos_de_robo = [
+#                     "horário de atendimento", "não responda", "mensagem automática",
+#                     "digite a opção", "agradecemos sua mensagem", "estamos ausentes",
+#                     "no momento não", "toque no link", "obrigado pelo contato",
+#                     "assim que possível", "dúvidas frequentes", "nosso expediente",
+#                     "está fechada", "resposta automática", "visualizar o catálogo"
+#                 ]
+#                 if any(termo in texto_cliente.lower() for termo in termos_de_robo): 
+#                     print(f"--- [IGNORADO] Mensagem automática detectada de {sender}")
+#                     continue
+#                 # ==============================================================
+#                 # INICIO DA LÓGICA DE TRANSBORDO (HUMANO)
+#                 # ==============================================================
+                
+#                 telefone_limpo = sender.split('@')[0]
+#                 mensagem_lower = texto_cliente.lower()
+
+#                 # 1. VERIFICA SE JÁ ESTÁ NA LISTA DE PAUSADOS
+#                 if telefone_limpo in clientes_pausados:
+#                     print(f"--- [PAUSADO] Ignorando {telefone_limpo} (Aguardando Humano)")
+#                     continue # Pula para a próxima mensagem e não aciona o Gemini
+
+#                 # 2. VERIFICA SE O CLIENTE PEDIU HUMANO AGORA
+#                 if any(palavra in mensagem_lower for palavra in PALAVRAS_CHAVE):
+#                     print(f"--- [TRANSBORDO] Cliente {telefone_limpo} pediu humano.")
+                    
+#                     # A) Adiciona na lista negra (memória)
+#                     clientes_pausados.append(telefone_limpo)
+                    
+#                     # B) Avisa o Cliente (Usando sua função existente)
+#                     msg_cliente = "Entendido. Um especialista humano vai seguir com seu atendimento a partir de agora. Aguarde um momento! 👨‍💻"
+#                     enviar_mensagem(sender, msg_cliente)
+                    
+#                     # C) Avisa VOCÊ (Admin) (Usando sua função existente)
+#                     msg_admin = f"🚨 ALERTA DE TRANSBORDO!\nCliente: {telefone_limpo}\nDisse: {texto_cliente}\n\nEntre no WhatsApp para assumir!"
+#                     enviar_mensagem(NUMERO_ADMIN, msg_admin)
+                    
+#                     continue # Encerra aqui e não chama o Gemini
+                
+#                 # ==============================================================
+#                 # FIM DA LÓGICA DE TRANSBORDO
+#                 # ==============================================================
                 
 #                 print(f"--- [CLIENTE] {sender}: {texto_cliente}")
 
+#             # Atualiza memória
 #             if sender not in historico_conversas: historico_conversas[sender] = []
             
 #             if not eh_audio: historico_conversas[sender].append(f"Cliente: {texto_cliente}")
@@ -152,28 +215,37 @@
             
 #             memoria = "\n".join(historico_conversas[sender][-15:]) 
             
-#             # Garante que o link não tenha espaços extras
+#             # Limpa o link
 #             link_agenda_limpo = LINK_AGENDA.strip()
 
+#             # --- O PROMPT (Atualizado para ser menos chata) ---
 #             instrucoes_base = f"""
 #             {INFO_PRODUTO}
 
-#             CONTEXTO:
-#             Você abordou o cliente oferecendo uma ferramenta para BPO.
+#             CONTEXTO ATUAL:
+#             Você é Maria Clara. Você está conversando com um lead sobre BPO Financeiro.
             
 #             SUA MISSÃO:
-#             Gerar desejo pelos DASHBOARDS e levar para Reunião/Teste.
+#             Ser útil e consultiva. Seu objetivo final é o agendamento, MAS você não deve ser insistente.
             
-#             DIRETRIZES TÉCNICAS (IMPORTANTÍSSIMO):
-#             1. NÃO use formatação Markdown nos links. NUNCA faça isso: [Link](url).
-#             2. Envie o link puro e simples. Exemplo: "Acesse aqui: https://..."
-#             3. Isso evita que o link quebre no WhatsApp.
+#             🔴 REGRA DE OURO (GATILHO DE PARADA):
+#             Se o cliente der sinais de encerramento ou postergação, como:
+#             - "Vou analisar"
+#             - "Vou ver"
+#             - "Ok obrigado"
+#             - "Qualquer coisa eu chamo"
+#             - "Tá bom"
+            
+#             Nesse caso, PARE DE VENDER IMEDIATAMENTE.
+#             Apenas responda de forma curta e educada: "Combinado! Fico à disposição se tiver dúvidas. Um abraço!"
+#             NÃO faça novas perguntas e NÃO mande mais textos longos após isso.
 
 #             DIRETRIZES DE RESPOSTA:
-#             - PRIMEIRA ABORDAGEM: Apresente o SistemClass (Dashboards + Tarefas + Multi-CNPJ).
-#             - ENCERRAMENTO: Se o cliente disser "Agendado" ou "Ok", APENAS agradeça e encerre.
+#             - Se o cliente estiver engajado (fazendo perguntas), explique os benefícios (Dashboards, Tarefas).
+#             - Se o cliente perguntar preço, fale.
+#             - Seja concisa. Evite blocos de texto gigantes.
             
-#             LINKS:
+#             LINKS (Só envie se o cliente pedir ou se houver abertura clara):
 #             - Cadastro: {LINK_LANDING}
 #             - Agenda: {link_agenda_limpo}
 
@@ -183,33 +255,9 @@
 
 #             try:
 #                 time.sleep(3) 
-#                 resposta_bot = ""
-                
-#                 if eh_audio and caminho_audio:
-#                     print(f"--- [GEMINI] Processando áudio...")
-#                     arquivo_gemini = genai.upload_file(caminho_audio, mime_type="audio/mp3")
-                    
-#                     prompt_audio = f"""
-#                     ANALISE ESTE ÁUDIO COM ATENÇÃO.
-#                     1. Se for PERGUNTA NOVA, responda (Preço, Funcionalidade).
-#                     2. Se for CONFIRMAÇÃO (ex: "Agendado"), encerre a conversa.
-#                     3. NÃO use Markdown nos links. Envie links puros.
-                    
-#                     Base de conhecimento:
-#                     {INFO_PRODUTO}
-                    
-#                     Responda ao áudio:
-#                     """
-                    
-#                     response = model.generate_content([prompt_audio, arquivo_gemini])
-#                     resposta_bot = response.text.strip()
-#                     try: os.remove(caminho_audio)
-#                     except: pass
-
-#                 else:
-#                     instrucoes_texto = instrucoes_base + "\nResponda como Maria Clara:"
-#                     response = model.generate_content(instrucoes_texto)
-#                     resposta_bot = response.text.strip()
+#                 instrucoes_texto = instrucoes_base + "\nResponda como Maria Clara:"
+#                 response = model.generate_content(instrucoes_texto)
+#                 resposta_bot = response.text.strip()
 
 #                 print(f"--- [RODRIGO] {resposta_bot}")
 #                 historico_conversas[sender].append(f"Rodrigo: {resposta_bot}")
@@ -227,13 +275,14 @@
 #     port = int(os.environ.get("PORT", 5000))
 #     app.run(host='0.0.0.0', port=port)
 
+
 from flask import Flask, request, jsonify
 import requests
 import google.generativeai as genai
 import time
 import os
 import uuid
-import json # Adicionado para garantir estabilidade
+import json
 
 app = Flask(__name__)
 
@@ -244,69 +293,66 @@ WASENDER_API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00
 GEMINI_API_KEY = "AIzaSyAM2Z3HyOcANDfRq1vr5ROX5QaX8LMBlBg"
 
 # ==============================================================================
-# 2. INFORMAÇÕES
+# 2. INFORMAÇÕES GERAIS
 # ==============================================================================
 NOME_EMPRESA = "SistemClass"
 LINK_LANDING = "https://sistemclass.com.br"
-# Link Geral do Calendly (Mais seguro contra erro 404)
-LINK_AGENDA = "https://calendly.com/rodriabreu" 
+LINK_AGENDA = "https://calendly.com/financlassoficial" 
 
 # --- CONFIGURAÇÃO DE TRANSBORDO ---
-# Lista de números que a IA não deve mais responder (Memória Volátil)
 clientes_pausados = []
-
-# Seu número pessoal para receber o aviso (formato internacional sem +)
-# Exemplo: 5531999999999
 NUMERO_ADMIN = "5531993413530" 
-
-# Palavras que ativam o modo humano
-PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "pessoa"]
+PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "pessoa", "falar com gente"]
 
 # ==============================================================================
-# BASE DE CONHECIMENTO (O Cérebro da Maria Clara)
+# 3. O CÉREBRO DA MARIA CLARA (TEXTO NOVO + PREÇOS ANTIGOS)
 # ==============================================================================
 INFO_PRODUTO = f"""
-RESUMO ESTRATÉGICO PARA O AGENTE:
-Você é Maria Clara, especialista em SistemClass. Seu objetivo é mostrar como transformar o BPO Operacional em BPO Consultivo.
+RESUMO ESTRATÉGICO PARA O AGENTE (MARIA CLARA):
+Você é Maria Clara, consultora da SistemClass. 
+Você está conversando com BPOs Financeiros. Seu objetivo é levar para o Teste Grátis ou Agendamento, mas sendo consultiva.
 
-O SEU DISCURSO DE VENDAS (A "Proposta de Valor"):
-Não somos apenas um sistema financeiro. Entregamos 3 pilares fundamentais para o BPO:
+--- O PRODUTO (SISTEMCLASS - ERP 3 EM 1) ---
+Desenvolvemos uma ferramenta de Gestão 3 em 1 (Modelo SaaS) que resolve todas as dores da operação de BPO em um só lugar.
+Elimina a necessidade de contratar várias ferramentas (Trello, Emissores, Planilhas), reduzindo custos.
 
-1. INTELIGÊNCIA (O PRINCIPAL): Entregamos Dashboards prontos de DRE, Fluxo de Caixa, Laudos Financeiros e Valuation. 
-   - Argumento: "Seu cliente não entende planilhas, ele entende gráficos e insights. Entregue valor estratégico."
-   
-2. ORGANIZAÇÃO: Temos um Gestor de Tarefas (estilo Trello) nativo dentro do sistema.
-   - Argumento: "Controle o fechamento da sua equipe sem sair da tela do financeiro."
+OS 3 PILARES (Use isso para explicar o funcionamento):
+1. GESTÃO INTERNA (ORGANIZAÇÃO):
+   - Gestão de contratos.
+   - Gestor de tarefas nativo (estilo Trello e PlayBPO) para controlar a equipe.
 
-3. ESCALA (PRODUTIVIDADE): Somos Multi-CNPJ.
-   - Argumento: "Gerencie 10, 20, 50 clientes com apenas 1 login e painel unificado."
+2. GESTÃO OPERACIONAL (DIA A DIA):
+   - Contas a Pagar/Receber, Conciliação Bancária, Emissão de Notas Fiscais.
+   - Relatórios operacionais completos.
 
-PREÇOS (Use apenas se perguntarem):
-- R$139/mês (Financeiro) ou R$189/mês (Comercial+Fiscal).
-- Descontos progressivos acima de 5 CNPJs.
+3. GESTÃO ESTRATÉGICA (O GRANDE DIFERENCIAL - BI):
+   - Geração automática de Dashboards em tempo real (sem esperar fechar o mês).
+   - DRE Gerencial, Fluxo de Caixa, KPIs e VALUATION automático.
+   - Geração de insights e laudos financeiros/comerciais.
+   - OBS: O cliente final acessa os resultados instantaneamente.
+
+INTEGRAÇÕES E FLEXIBILIDADE:
+- Temos API com: Conta Azul, Omie, Nibo e principais do mercado.
+- Opção Modular: Se o cliente já tem ERP, pode contratar APENAS a parte Estratégica (BI) e integrar.
+- Sem limite mínimo de licenças.
+
+--- TABELA DE PREÇOS (SÓ FALE SE PERGUNTAREM) ---
+- R$139,00/mês: Plano Financeiro.
+- R$189,00/mês: Plano Completo (Comercial + Financeiro + Fiscal).
+- Temos descontos progressivos acima de 5 CNPJs.
+
+--- LINKS ---
+- Link para Teste Grátis (7 dias): {LINK_LANDING}
+- Link para Agenda: {LINK_AGENDA}
 """
 
 genai.configure(api_key=GEMINI_API_KEY)
-
-# ✅ VOLTAMOS PARA O MODELO ESTÁVEL (O "TANQUE DE GUERRA")
-# Se o 1.5 estava falhando, este aqui vai garantir que o texto saia.
+# Mantendo o modelo flash-latest que é mais rápido e barato, 
+# mas você pode voltar para o 'gemini-1.5-flash' se preferir.
 model = genai.GenerativeModel('gemini-flash-latest') 
 
 historico_conversas = {} 
 mapa_ids = {}
-
-def baixar_audio(url_audio):
-    try:
-        nome_arquivo = f"temp_{uuid.uuid4()}.mp3"
-        resposta = requests.get(url_audio)
-        if resposta.status_code == 200:
-            with open(nome_arquivo, 'wb') as f:
-                f.write(resposta.content)
-            return nome_arquivo
-        return None
-    except Exception as e:
-        print(f"Erro download áudio: {e}")
-        return None
 
 def enviar_mensagem(telefone, texto):
     url = "https://www.wasenderapi.com/api/send-message"
@@ -342,13 +388,13 @@ def webhook():
         if not messages: return jsonify({"status": "ignored"}), 200
 
         for msg in messages:
-            # Filtro de mensagens enviadas por mim mesmo (Isso ignora o disparo do Disparador, o que é CORRETO)
             key = msg.get('key', {})
             if key.get('fromMe') or msg.get('fromMe'): continue
 
             remote_jid = key.get('remoteJid') or msg.get('from')
             sender = remote_jid
 
+            # Tratamento do ID do remetente
             if sender and '@lid' in sender:
                 if sender in mapa_ids: sender = mapa_ids[sender]
                 else:
@@ -358,126 +404,95 @@ def webhook():
             tipo_msg = msg.get('messageType') or msg.get('type')
             msg_content = msg.get('message', {})
             texto_cliente = ''
-            caminho_audio = None
             eh_audio = False
 
-            # --- LÓGICA DE ÁUDIO (BLOQUEIO EDUCADO) ---
+            # --- 1. BLOQUEIO DE ÁUDIO (MANTIDO DO ORIGINAL) ---
             if tipo_msg == 'audio' or 'audioMessage' in msg_content:
-                print(f"--- [CLIENTE] Áudio recebido de {sender} (Não processado por segurança)")
-                
-                # Resposta padrão imediata
+                print(f"--- [ÁUDIO] Recebido de {sender} (Bloqueado)")
                 msg_bloqueio = "Desculpe, ainda não consigo ouvir áudios por aqui. 🎧 Poderia escrever sua dúvida por favor? Assim consigo te responder rapidinho! 😊"
                 enviar_mensagem(sender, msg_bloqueio)
                 
-                # Salva no histórico para não perder o fio da meada
                 if sender not in historico_conversas: historico_conversas[sender] = []
                 historico_conversas[sender].append(f"Rodrigo: {msg_bloqueio}")
-                
-                continue # Pula o resto e espera o cliente digitar 
+                continue 
 
-            # --- LÓGICA DE TEXTO ---
+            # --- 2. PROCESSAMENTO DE TEXTO ---
             else:
                 if 'conversation' in msg: texto_cliente = msg['conversation']
                 elif 'messageBody' in msg: texto_cliente = msg['messageBody']
                 elif 'body' in msg: texto_cliente = msg['body']
                 elif 'message' in msg: texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
+                
                 if not texto_cliente: continue
 
                 # COMANDO DE RESET
-                if texto_cliente.lower().strip() in ['reset', 'limpar', '/reset', '/limpar']:
+                if texto_cliente.lower().strip() in ['reset', 'limpar', '/reset']:
                     historico_conversas[sender] = []
-                    print(f"--- [RESET] Memória limpa para {sender}")
                     enviar_mensagem(sender, "♻️ Memória reiniciada! Pode começar um novo teste.")
                     continue 
                 
-                # Filtros Anti-Robô
-                termos_de_robo = ["horário de atendimento", "não responda", "mensagem automática", "digite a opção"]
-                if any(termo in texto_cliente.lower() for termo in termos_de_robo): continue
-                # ==============================================================
-                # INICIO DA LÓGICA DE TRANSBORDO (HUMANO)
-                # ==============================================================
-                
+                # FILTROS ANTI-ROBÔ
+                termos_de_robo = [
+                    "horário de atendimento", "não responda", "mensagem automática",
+                    "digite a opção", "agradecemos sua mensagem", "estamos ausentes",
+                    "no momento não", "toque no link", "obrigado pelo contato",
+                    "assim que possível", "dúvidas frequentes"
+                ]
+                if any(termo in texto_cliente.lower() for termo in termos_de_robo): 
+                    continue
+
                 telefone_limpo = sender.split('@')[0]
                 mensagem_lower = texto_cliente.lower()
 
-                # 1. VERIFICA SE JÁ ESTÁ NA LISTA DE PAUSADOS
+                # --- 3. LÓGICA DE TRANSBORDO HUMANO ---
                 if telefone_limpo in clientes_pausados:
-                    print(f"--- [PAUSADO] Ignorando {telefone_limpo} (Aguardando Humano)")
-                    continue # Pula para a próxima mensagem e não aciona o Gemini
+                    print(f"--- [PAUSADO] {telefone_limpo} aguardando humano.")
+                    continue 
 
-                # 2. VERIFICA SE O CLIENTE PEDIU HUMANO AGORA
                 if any(palavra in mensagem_lower for palavra in PALAVRAS_CHAVE):
                     print(f"--- [TRANSBORDO] Cliente {telefone_limpo} pediu humano.")
-                    
-                    # A) Adiciona na lista negra (memória)
                     clientes_pausados.append(telefone_limpo)
                     
-                    # B) Avisa o Cliente (Usando sua função existente)
                     msg_cliente = "Entendido. Um especialista humano vai seguir com seu atendimento a partir de agora. Aguarde um momento! 👨‍💻"
                     enviar_mensagem(sender, msg_cliente)
                     
-                    # C) Avisa VOCÊ (Admin) (Usando sua função existente)
-                    msg_admin = f"🚨 ALERTA DE TRANSBORDO!\nCliente: {telefone_limpo}\nDisse: {texto_cliente}\n\nEntre no WhatsApp para assumir!"
+                    msg_admin = f"🚨 ALERTA DE TRANSBORDO!\nCliente: {telefone_limpo}\nDisse: {texto_cliente}\nEntre no WhatsApp para assumir!"
                     enviar_mensagem(NUMERO_ADMIN, msg_admin)
-                    
-                    continue # Encerra aqui e não chama o Gemini
-                
-                # ==============================================================
-                # FIM DA LÓGICA DE TRANSBORDO
-                # ==============================================================
+                    continue 
                 
                 print(f"--- [CLIENTE] {sender}: {texto_cliente}")
 
-            # Atualiza memória
+            # --- 4. COMUNICAÇÃO COM O GEMINI ---
             if sender not in historico_conversas: historico_conversas[sender] = []
             
-            if not eh_audio: historico_conversas[sender].append(f"Cliente: {texto_cliente}")
-            else: historico_conversas[sender].append(f"Cliente: [Enviou um áudio]")
-            
-            memoria = "\n".join(historico_conversas[sender][-15:]) 
-            
-            # Limpa o link
-            link_agenda_limpo = LINK_AGENDA.strip()
+            historico_conversas[sender].append(f"Cliente: {texto_cliente}")
+            memoria = "\n".join(historico_conversas[sender][-12:]) 
 
-            # --- O PROMPT (Atualizado para ser menos chata) ---
+            # Prompt Estruturado
             instrucoes_base = f"""
             {INFO_PRODUTO}
 
-            CONTEXTO ATUAL:
-            Você é Maria Clara. Você está conversando com um lead sobre BPO Financeiro.
+            CONTEXTO DA CONVERSA:
+            O cliente pode ter vindo de um disparo onde oferecemos um "ERP 3 em 1".
             
-            SUA MISSÃO:
-            Ser útil e consultiva. Seu objetivo final é o agendamento, MAS você não deve ser insistente.
-            
-            🔴 REGRA DE OURO (GATILHO DE PARADA):
-            Se o cliente der sinais de encerramento ou postergação, como:
-            - "Vou analisar"
-            - "Vou ver"
-            - "Ok obrigado"
-            - "Qualquer coisa eu chamo"
-            - "Tá bom"
-            
-            Nesse caso, PARE DE VENDER IMEDIATAMENTE.
-            Apenas responda de forma curta e educada: "Combinado! Fico à disposição se tiver dúvidas. Um abraço!"
-            NÃO faça novas perguntas e NÃO mande mais textos longos após isso.
+            SE O CLIENTE DISSER "SIM", "QUERO", "PODE":
+            Mostre entusiasmo. Resuma os benefícios (Gestão Interna, Operacional e Estratégica) e convide para o teste grátis de 7 dias.
 
-            DIRETRIZES DE RESPOSTA:
-            - Se o cliente estiver engajado (fazendo perguntas), explique os benefícios (Dashboards, Tarefas).
-            - Se o cliente perguntar preço, fale.
-            - Seja concisa. Evite blocos de texto gigantes.
+            SE O CLIENTE PERGUNTAR PREÇO:
+            Seja direto: informe os valores (R$139 e R$189) e mencione os descontos para volume.
             
-            LINKS (Só envie se o cliente pedir ou se houver abertura clara):
-            - Cadastro: {LINK_LANDING}
-            - Agenda: {link_agenda_limpo}
+            REGRA DE OURO:
+            Se o cliente disser "Vou ver", "Obrigado", "Qualquer coisa chamo" -> Encerre educadamente com "Fico à disposição" e PARE de vender.
 
             HISTÓRICO RECENTE:
             {memoria}
             """
 
             try:
+                # Pequeno delay para naturalidade
                 time.sleep(3) 
-                instrucoes_texto = instrucoes_base + "\nResponda como Maria Clara:"
-                response = model.generate_content(instrucoes_texto)
+                
+                response = model.generate_content(instrucoes_base + "\nResponda como Maria Clara:")
                 resposta_bot = response.text.strip()
 
                 print(f"--- [RODRIGO] {resposta_bot}")
@@ -485,7 +500,7 @@ def webhook():
                 enviar_mensagem(sender, resposta_bot)
 
             except Exception as e_api:
-                print(f"--- [ERRO PROCESSAMENTO] {e_api}")
+                print(f"--- [ERRO GEMINI] {e_api}")
 
     except Exception as e:
         print(f"--- [ERRO GERAL] {e}")
