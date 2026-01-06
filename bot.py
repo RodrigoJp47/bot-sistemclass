@@ -166,6 +166,25 @@ def webhook():
                 elif 'message' in msg: texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
                 if not texto_cliente: continue
 
+                # --- COMANDO DE ADMIN (VOCÊ MANDA ISSO PARA O ROBÔ CALAR A BOCA DE ALGUÉM) ---
+                # Exemplo de uso: Mande do seu celular "/pare 5531988887777"
+                if sender == NUMERO_ADMIN and texto_cliente.lower().startswith("/pare"):
+                    try:
+                        # Pega o número que você digitou depois do espaço
+                        numero_para_parar = texto_cliente.split(" ")[1].strip()
+                        # Remove caracteres se houver (+ ou -)
+                        numero_limpo = "".join(filter(str.isdigit, numero_para_parar))
+                        
+                        if numero_limpo not in clientes_pausados:
+                            clientes_pausados.append(numero_limpo)
+                            enviar_mensagem(sender, f"✅ O cliente {numero_limpo} foi SILENCIADO. A Maria Clara não responde mais ele.")
+                        else:
+                            enviar_mensagem(sender, f"⚠️ O cliente {numero_limpo} já estava silenciado.")
+                        continue
+                    except:
+                        enviar_mensagem(sender, "❌ Erro no comando. Use: /pare 5511999999999")
+                        continue
+
                 # COMANDO DE RESET
                 if texto_cliente.lower().strip() in ['reset', 'limpar', '/reset', '/limpar']:
                     historico_conversas[sender] = []
@@ -236,6 +255,14 @@ def webhook():
 
             CONTEXTO:
             Você é Maria Clara, especialista do SistemClass. Você está conversando com um dono de BPO Financeiro.
+            🚨 NOVO GATILHO DE IDENTIFICAÇÃO:
+            Como a abordagem inicial foi "Posso falar com o responsável?", é natural que o cliente pergunte "Quem é?", "Qual empresa?", "Sobre o que é?" ou demonstrar interesse.
+            
+            SE O CLIENTE PERGUNTAR QUEM É OU QUAL EMPRESA:
+            Responda EXATAMENTE assim:
+            "Oi! Sou da SistemClass. Entrei em contato porque desenvolvemos uma tecnologia de inteligência financeira exclusiva para BPOs."
+            
+            (E logo em seguida, volte para a FASE 1 ).
             
             🚨 SEU ROTEIRO OBRIGATÓRIO (SIGA ESTA ORDEM):
             
