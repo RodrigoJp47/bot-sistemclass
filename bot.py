@@ -168,7 +168,7 @@ def webhook():
 
                 # --- COMANDO DE ADMIN (VOCÊ MANDA ISSO PARA O ROBÔ CALAR A BOCA DE ALGUÉM) ---
                 # Exemplo de uso: Mande do seu celular "/pare 5531988887777"
-                if sender == NUMERO_ADMIN and texto_cliente.lower().startswith("/pare"):
+                if NUMERO_ADMIN in sender and texto_cliente.lower().startswith("/pare"):
                     try:
                         # Pega o número que você digitou depois do espaço
                         numero_para_parar = texto_cliente.split(" ")[1].strip()
