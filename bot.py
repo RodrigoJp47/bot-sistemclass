@@ -166,20 +166,24 @@ def webhook():
                 elif 'message' in msg: texto_cliente = msg_content.get('conversation') or msg_content.get('extendedTextMessage', {}).get('text')
                 if not texto_cliente: continue
 
-                # --- COMANDO DE ADMIN (VOCÊ MANDA ISSO PARA O ROBÔ CALAR A BOCA DE ALGUÉM) ---
-                # Exemplo de uso: Mande do seu celular "/pare 5531988887777"
-                if NUMERO_ADMIN in sender and texto_cliente.lower().startswith("/pare"):
+                # --- COMANDO DE ADMIN (VERSÃO BLINDADA) ---
+                # 1. Limpa os números (tira +, @, espaços, traços)
+                sender_limpo = "".join(filter(str.isdigit, sender))
+                admin_limpo = "".join(filter(str.isdigit, NUMERO_ADMIN))
+                
+                # 2. Faz a comparação segura
+                # Verificamos se o seu número de admin está contido no remetente
+                if admin_limpo in sender_limpo and texto_cliente.lower().startswith("/pare"):
                     try:
                         # Pega o número que você digitou depois do espaço
                         numero_para_parar = texto_cliente.split(" ")[1].strip()
-                        # Remove caracteres se houver (+ ou -)
-                        numero_limpo = "".join(filter(str.isdigit, numero_para_parar))
+                        numero_alvo_limpo = "".join(filter(str.isdigit, numero_para_parar))
                         
-                        if numero_limpo not in clientes_pausados:
-                            clientes_pausados.append(numero_limpo)
-                            enviar_mensagem(sender, f"✅ O cliente {numero_limpo} foi SILENCIADO. A Maria Clara não responde mais ele.")
+                        if numero_alvo_limpo not in clientes_pausados:
+                            clientes_pausados.append(numero_alvo_limpo)
+                            enviar_mensagem(sender, f"✅ O cliente {numero_alvo_limpo} foi SILENCIADO. A Maria Clara não responde mais ele.")
                         else:
-                            enviar_mensagem(sender, f"⚠️ O cliente {numero_limpo} já estava silenciado.")
+                            enviar_mensagem(sender, f"⚠️ O cliente {numero_alvo_limpo} já estava silenciado.")
                         continue
                     except:
                         enviar_mensagem(sender, "❌ Erro no comando. Use: /pare 5511999999999")
