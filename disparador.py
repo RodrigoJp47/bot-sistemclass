@@ -8,8 +8,8 @@ from datetime import datetime
 API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00d462"
 API_URL = "https://www.wasenderapi.com/api/send-message"
 NOME_ARQUIVO = "lista_clientes.xlsx"
-TEMPO_MIN = 120
-TEMPO_MAX = 240
+TEMPO_MIN = 360
+TEMPO_MAX = 720
 
 def enviar_disparos():
     if not os.path.exists(NOME_ARQUIVO):
