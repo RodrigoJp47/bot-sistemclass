@@ -334,12 +334,8 @@ PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "p
 
 # --- SEU NOVO TEXTO DE APRESENTAÇÃO (TEXTÃO) ---
 # Adicionado o LINK DA AGENDA conforme solicitado
-SCRIPT_BOAS_VINDAS = f"""Olá! Tudo bem? 
+SCRIPT_BOAS_VINDAS = f"""Olá! 
 Aqui é a Maria Clara da SistemClass.
-
-Você trabalha como BPO financeiro? 
-
-Se positivo, eu tenho uma novidade para você que irá te ajudar muito. 
 
 Desenvolvemos uma ferramenta de Gestão 3 em 1. Um ERP modelo SaaS. Que resolve todas as dores da operação de BPO Financeiro em um só lugar. O que elimina a necessidade de contratação de várias ferramentas na sua operação. Reduzindo os seus custos e otimizando o seu tempo. E sem limite mínimo de licenças na contratação. 
 
