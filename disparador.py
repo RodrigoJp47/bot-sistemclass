@@ -8,8 +8,8 @@ from datetime import datetime
 API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00d462"
 API_URL = "https://www.wasenderapi.com/api/send-message"
 NOME_ARQUIVO = "lista_clientes.xlsx"
-TEMPO_MIN = 360
-TEMPO_MAX = 720
+TEMPO_MIN = 600
+TEMPO_MAX = 1200
 
 def enviar_disparos():
     if not os.path.exists(NOME_ARQUIVO):
@@ -45,13 +45,25 @@ def enviar_disparos():
         if not telefone: continue
         if len(telefone) >= 10 and not telefone.startswith("55"): telefone = "55" + telefone
 
-        # --- A NOVA ISCA (MISTÉRIO / FILTRO DE DECISOR) ---
-        if nome.lower() in ["desconhecido", "cliente", ""]:
-            # Sem nome
-            mensagem = "Olá, tudo bem? Eu poderia falar com o responsável pela empresa?"
-        else:
-            # Com nome (Fica mais natural ainda)
-            mensagem = f"Olá {nome}, tudo bem? Por aqui eu consigo falar com o responsável pela empresa?"
+        mensagem = """Olá! Tudo bem?
+
+Vi que você atua com BPO Financeiro. Uma dúvida rápida:
+
+Como você apresenta os resultados dos seus clientes ? 
+
+Nós criamos um sistema que gera BI ( Business Intelligence ) em tempo real para o seu cliente. 
+
+DRE Gerêncial/Fluxo de Caixa  e Dashboards automáticos para te tirar do operacional e gerar valor na sua operação. 
+
+Posso te liberar um acesso teste gratuito para você ver como funciona por dentro?"""
+
+        # # --- A NOVA ISCA (MISTÉRIO / FILTRO DE DECISOR) ---
+        # if nome.lower() in ["desconhecido", "cliente", ""]:
+        #     # Sem nome
+        #     mensagem = "Olá, tudo bem? Eu poderia falar com o responsável pela empresa?"
+        # else:
+        #     # Com nome (Fica mais natural ainda)
+        #     mensagem = f"Olá {nome}, tudo bem? Por aqui eu consigo falar com o responsável pela empresa?"
 
         payload = {"to": telefone, "text": mensagem}
         headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
