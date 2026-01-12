@@ -32,7 +32,7 @@ def enviar_disparos():
         hora = agora.hour # Pega só a hora (ex: 9, 14, 19)
         
         # Se for antes das 9h OU depois das 18h (considerando 18:00 o limite)
-        if hora < 9 or hora >= 18:
+        if hora < 9 or hora >= 19:
             print(f"🚫 Fora do horário comercial ({agora.strftime('%H:%M')}). Parando o robô por segurança.")
             break # Encerra o loop e para o programa
         nome = str(linha.get('Nome', 'Cliente')) 
