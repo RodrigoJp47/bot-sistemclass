@@ -352,15 +352,12 @@ PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "p
 # 3. TEXTOS E BASE DE CONHECIMENTO
 # ==============================================================================
 
-# DADOS DE ACESSO (Obrigatorios)
 DADOS_ACESSO = f"""
 Link: {LINK_LANDING}
 Usuário: Teste@cliente
 Senha: @Jp167958
 """
 
-# CONTEUDO DA APRESENTAÇÃO (Referencia para a IA montar a fala)
-# Removi o formato de "Script pronto" e deixei como "Tópicos"
 TOPICOS_APRESENTACAO = """
 1. O QUE É: Ferramenta de Gestão 3 em 1 (ERP modelo SaaS). Resolve todas as dores do BPO Financeiro num só lugar.
 2. BENEFÍCIOS: Elimina contratação de várias ferramentas, reduz custos, otimiza tempo. Sem limite mínimo de licenças.
@@ -371,7 +368,6 @@ TOPICOS_APRESENTACAO = """
 4. DIFERENCIAIS: API com Conta Azul, Omie, Nibo. Geração de insights e laudos financeiros.
 """
 
-# --- INFORMAÇÕES TÉCNICAS E REGRAS (CÉREBRO PARA TIRAR DÚVIDAS) ---
 INFO_PRODUTO = f"""
 REGRA DE OURO SOBRE PERSONALIZAÇÃO:
 - LOGO DO CLIENTE: Apenas para planos ACIMA DE 5 CNPJs.
@@ -484,8 +480,15 @@ def webhook():
                 enviar_mensagem(sender, "♻️ Memória reiniciada!")
                 continue 
 
-            # --- 5. FILTRO ANTI-ROBÔ ---
-            termos_de_robo = ["horário de atendimento", "não responda", "mensagem automática", "digite a opção"]
+            # --- 5. FILTRO ANTI-ROBÔ (LISTA COMPLETA AGORA) ---
+            termos_de_robo = [
+                "horário de atendimento", "não responda", "mensagem automática",
+                "digite a opção", "agradecemos sua mensagem", "estamos ausentes",
+                "no momento não", "toque no link", "obrigado pelo contato",
+                "assim que possível", "dúvidas frequentes", "nosso expediente",
+                "está fechada", "resposta automática", "visualizar o catálogo",
+                "toque aqui", "saiba mais", "inscreva-se"
+            ]
             if any(termo in texto_cliente.lower() for termo in termos_de_robo): continue
 
             # --- 6. TRANSBORDO ---
@@ -502,14 +505,14 @@ def webhook():
             textos_por_usuario[sender].append(texto_cliente)
 
         # ======================================================================
-        # LÓGICA DO GEMINI ATUALIZADA (HUMANIZADA)
+        # LÓGICA DO GEMINI ATUALIZADA (CORREÇÃO DE FORMATO)
         # ======================================================================
         for sender_user, lista_msgs in textos_por_usuario.items():
             texto_completo = " ".join(lista_msgs)
             historico_conversas[sender_user].append(f"Cliente: {texto_completo}")
             memoria = "\n".join(historico_conversas[sender_user][-15:]) 
             
-            # PROMPT ESTRUTURADO PARA GERAR RESPOSTA NATURAL
+            # --- PROMPT CORRIGIDO ---
             instrucoes_base = f"""
             Você é Maria Clara, especialista do SistemClass. 
             Seu tom de voz: Amigável, consultivo, "gente como a gente", mas profissional. Use emojis moderados.
@@ -529,25 +532,25 @@ def webhook():
             
             O QUE O CLIENTE DISSE AGORA: "{texto_completo}"
 
-            # DIRETRIZES DE RESPOSTA (SIGA A ORDEM):
+            # DIRETRIZES ESTRITAS DE RESPOSTA:
 
-            1. FASE DE INTERESSE (O cliente respondeu "Sim", "Quero", "Como funciona", "Pode falar" à sua mensagem inicial):
-               NÃO COPIE E COLE TEXTO PRONTO. Monte a resposta nesta estrutura:
-               - Passo A (Empatia): Comece com uma frase humana e acolhedora. Ex: "Que maravilha! Fico feliz pelo seu interesse." ou "Perfeito! Vou te explicar exatamente como funciona."
-               - Passo B (Explicação): Apresente o SistemClass usando os dados de 'TOPICOS_APRESENTACAO'. Fale que é um Gestor 3 em 1, fale do BI em tempo real (que é o ponto forte) e da gestão operacional. Use bullet points ou quebra de linha para ficar fácil de ler no WhatsApp.
-               - Passo C (CTA de Ouro): Diga: "Para você ver isso na prática, liberei seu acesso de teste:" seguido OBRIGATORIAMENTE dos dados de Usuário, Senha e Link.
-               - Passo D (Agenda): Finalize dizendo: "Se preferir uma apresentação guiada, pode agendar aqui: {LINK_AGENDA}"
-            
-            2. FASE DE DÚVIDA (Se o cliente perguntou preço, cor, logo):
-               - Responda de forma curta e direta usando as REGRAS TÉCNICAS.
+            ESTRUTURA MENTAL (Siga esta lógica, mas NÃO escreva os nomes dos passos como "Passo A" ou "Passo B". Escreva apenas o texto final corrido):
 
-            3. FASE DE AGENDAMENTO (Se o cliente pedir reunião/call):
-               - Envie o link da agenda com entusiasmo.
+            1. SE FOR FASE DE INTERESSE (Cliente disse "Sim", "Quem é", "Pode falar"):
+               - Comece com uma frase humana e acolhedora (ex: "Que maravilha!").
+               - Explique o SistemClass usando os tópicos de apresentação de forma fluida (use bullets para facilitar a leitura).
+               - OBRIGATÓRIO: Entregue AGORA o Usuário, Senha e Link de Teste.
+               - OBRIGATÓRIO: Entregue o link da Agenda.
             
-            4. FASE DE DESINTERESSE:
-               - Seja educada e encerre.
+            2. SE FOR DÚVIDA ESPECÍFICA:
+               - Responda direto ao ponto usando as regras técnicas.
+
+            3. SE FOR DESINTERESSE ("Não quero"):
+               - Aceite o "não" de primeira. Agradeça e encerre. Não insista.
             
-            IMPORTANTE: Sua resposta deve parecer uma conversa de WhatsApp, não um e-mail marketing robotizado.
+            IMPORTANTE: 
+            - Sua resposta deve parecer uma conversa natural de WhatsApp.
+            - JAMAIS escreva "Passo A:", "Passo B:". Isso é uma instrução para você, não para o cliente.
             """
 
             try:
@@ -555,9 +558,15 @@ def webhook():
                 response = model.generate_content(instrucoes_base)
                 resposta_bot = response.text.strip()
                 
-                print(f"--- [MARIA CLARA] {resposta_bot}")
-                historico_conversas[sender_user].append(f"Maria Clara: {resposta_bot}")
-                enviar_mensagem(sender_user, resposta_bot)
+                # Segurança extra: Remove rótulos caso a IA ainda teime em gerar
+                resposta_limpa = resposta_bot.replace("**Passo A (Empatia):**", "").replace("*Passo A (Empatia):*", "")\
+                                             .replace("**Passo B (Explicação):**", "").replace("*Passo B (Explicação):*", "")\
+                                             .replace("**Passo C (CTA de Ouro):**", "").replace("*Passo C (CTA de Ouro):*", "")\
+                                             .replace("**Passo D (Agenda):**", "").replace("*Passo D (Agenda):*", "")
+                
+                print(f"--- [MARIA CLARA] {resposta_limpa}")
+                historico_conversas[sender_user].append(f"Maria Clara: {resposta_limpa}")
+                enviar_mensagem(sender_user, resposta_limpa)
 
             except Exception as e:
                 print(f"Erro Gemini: {e}")
