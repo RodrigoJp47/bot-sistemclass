@@ -57,14 +57,7 @@ DRE Gerêncial/Fluxo de Caixa  e Dashboards automáticos para te tirar do operac
 
 Posso te liberar um acesso teste gratuito para você ver como funciona por dentro?"""
 
-        # # --- A NOVA ISCA (MISTÉRIO / FILTRO DE DECISOR) ---
-        # if nome.lower() in ["desconhecido", "cliente", ""]:
-        #     # Sem nome
-        #     mensagem = "Olá, tudo bem? Eu poderia falar com o responsável pela empresa?"
-        # else:
-        #     # Com nome (Fica mais natural ainda)
-        #     mensagem = f"Olá {nome}, tudo bem? Por aqui eu consigo falar com o responsável pela empresa?"
-
+        
         payload = {"to": telefone, "text": mensagem}
         headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 

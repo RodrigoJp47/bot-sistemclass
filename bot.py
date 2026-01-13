@@ -753,32 +753,39 @@ def webhook():
             sender_limpo = "".join(filter(str.isdigit, str(sender)))
             admin_limpo = "".join(filter(str.isdigit, NUMERO_ADMIN))
             
+            # DIAGNÓSTICO: Vamos ver no log quem está mandando mensagem
+            print(f"--- [DEBUG] Sender: {sender_limpo} | Admin: {admin_limpo}")
+            
             # Verifica se é admin (com ou sem o 55) ou se foi enviado por mim no Web
             eh_admin = enviada_por_mim or (admin_limpo in sender_limpo) or (sender_limpo in admin_limpo)
 
             comando = texto_cliente.lower().strip()
 
             # COMANDO /PARE
-            if eh_admin and comando.startswith("/pare"):
-                try:
-                    # Se digitar só "/pare", bloqueia o chat atual (sender)
-                    numero_alvo = sender_limpo
-                    
-                    # Se digitar "/pare 5531..." bloqueia o número especificado
-                    partes = comando.split(" ")
-                    if len(partes) > 1:
-                        numero_alvo = "".join(filter(str.isdigit, partes[1]))
-                    
-                    if numero_alvo not in clientes_pausados:
-                        clientes_pausados = salvar_pausado(numero_alvo)
-                        print(f"🚫 COMANDO: {numero_alvo} foi silenciado pelo Admin.")
-                        if not enviada_por_mim: enviar_mensagem(sender, f"✅ Cliente {numero_alvo} SILENCIADO.")
-                    else:
-                        if not enviada_por_mim: enviar_mensagem(sender, f"⚠️ {numero_alvo} já estava silenciado.")
-                    continue # Não processa mais nada
-                except Exception as e:
-                    print(f"Erro no comando pare: {e}")
-                    continue
+            if comando.startswith("/pare"):
+                if eh_admin:
+                    try:
+                        # Se digitar só "/pare", bloqueia o chat atual (sender)
+                        numero_alvo = sender_limpo
+                        
+                        # Se digitar "/pare 5531..." bloqueia o número especificado
+                        partes = comando.split(" ")
+                        if len(partes) > 1:
+                            numero_alvo = "".join(filter(str.isdigit, partes[1]))
+                        
+                        if numero_alvo not in clientes_pausados:
+                            clientes_pausados = salvar_pausado(numero_alvo)
+                            print(f"🚫 COMANDO: {numero_alvo} foi silenciado pelo Admin.")
+                            # REMOVIDA A TRAVA: Agora ele responde pra você confirmando!
+                            enviar_mensagem(sender, f"✅ Cliente {numero_alvo} SILENCIADO.")
+                        else:
+                            enviar_mensagem(sender, f"⚠️ {numero_alvo} já estava silenciado.")
+                        continue # Não processa mais nada
+                    except Exception as e:
+                        print(f"Erro no comando pare: {e}")
+                        continue
+                else:
+                    print(f"--- [ALERTA] Tentativa de /pare negada para {sender_limpo}")
 
             # COMANDO /RESET
             if comando in ['reset', 'limpar', '/reset', '/limpar']:
