@@ -358,6 +358,12 @@ Usuário: Teste@cliente
 Senha: @Jp167958
 """
 
+# TEXTO ESPECÍFICO DO TESTE GRÁTIS (SEM CARTÃO)
+TEXTO_TESTE_7_DIAS = """
+💡 Dica: Caso queira testar com seus próprios dados, você tem 7 dias grátis! 
+Não precisa de cartão de crédito. Basta clicar em "Cadastre-se" na página de login e sua senha é liberada na hora com apenas seu e-mail.
+"""
+
 TOPICOS_APRESENTACAO = """
 1. O QUE É: Ferramenta de Gestão 3 em 1 (ERP modelo SaaS). Resolve todas as dores do BPO Financeiro num só lugar.
 2. BENEFÍCIOS: Elimina contratação de várias ferramentas, reduz custos, otimiza tempo. Sem limite mínimo de licenças.
@@ -526,6 +532,9 @@ def webhook():
             DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
             {DADOS_ACESSO}
             LINK DA AGENDA: {LINK_AGENDA}
+
+            INFORMAÇÃO CRUCIAL (7 DIAS GRÁTIS):
+            {TEXTO_TESTE_7_DIAS}
 
             HISTÓRICO RECENTE:
             {memoria}
