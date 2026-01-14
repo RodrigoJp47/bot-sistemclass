@@ -485,7 +485,7 @@ def enviar_mensagem(telefone, texto):
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    global clientes_pausados # Garante que estamos usando a lista global
+    global clientes_pausados 
     try:
         data = request.get_json()
         
@@ -503,7 +503,7 @@ def webhook():
         if not messages: return jsonify({"status": "ignored"}), 200
 
         textos_por_usuario = {} 
-        # Recarrega pausados do arquivo para garantir sincronia
+        # Garante que a lista está atualizada com o arquivo
         clientes_pausados = carregar_pausados()
 
         for msg in messages:
@@ -545,19 +545,19 @@ def webhook():
             sender_limpo = "".join(filter(str.isdigit, str(sender)))
             admin_limpo = "".join(filter(str.isdigit, NUMERO_ADMIN))
             
-            # DIAGNÓSTICO: Vamos ver no log quem está mandando mensagem
-            print(f"--- [DEBUG] Sender: {sender_limpo} | Admin: {admin_limpo}")
+            # Debug para você ver no log quem é quem
+            print(f"--- [DEBUG] Sender: {sender_limpo} | Admin: {admin_limpo} | FromMe: {enviada_por_mim}")
             
             # Verifica se é admin (com ou sem o 55) ou se foi enviado por mim no Web
             eh_admin = enviada_por_mim or (admin_limpo in sender_limpo) or (sender_limpo in admin_limpo)
 
             comando = texto_cliente.lower().strip()
 
-            # COMANDO /PARE
+            # COMANDO /PARE (CORRIGIDO PARA DAR FEEDBACK)
             if comando.startswith("/pare"):
                 if eh_admin:
                     try:
-                        # Se digitar só "/pare", bloqueia o chat atual (sender)
+                        # Se digitar só "/pare", bloqueia o chat atual
                         numero_alvo = sender_limpo
                         
                         # Se digitar "/pare 5531..." bloqueia o número especificado
@@ -568,25 +568,27 @@ def webhook():
                         if numero_alvo not in clientes_pausados:
                             clientes_pausados = salvar_pausado(numero_alvo)
                             print(f"🚫 COMANDO: {numero_alvo} foi silenciado pelo Admin.")
+                            # Força o envio da confirmação
                             enviar_mensagem(sender, f"✅ Cliente {numero_alvo} SILENCIADO.")
                         else:
                             enviar_mensagem(sender, f"⚠️ {numero_alvo} já estava silenciado.")
-                        continue # Não processa mais nada
+                        continue 
                     except Exception as e:
                         print(f"Erro no comando pare: {e}")
                         continue
                 else:
-                    print(f"--- [ALERTA] Tentativa de /pare negada para {sender_limpo}")
+                    print(f"--- [ALERTA] Tentativa de /pare negada para {sender_limpo} (Não é admin)")
+                    # Feedback opcional se falhar:
+                    # enviar_mensagem(sender, "⚠️ Comando negado. Não reconheci você como Admin.")
+                    continue
 
             # COMANDO /RESET
             if comando in ['reset', 'limpar', '/reset', '/limpar']:
                 historico_conversas[sender] = []
                 
-                # Remove da lista de pausados e SALVA no arquivo
                 telefone_limpo_reset = sender.split('@')[0]
                 numero_limpo_digits = "".join(filter(str.isdigit, telefone_limpo_reset))
                 
-                # Tenta remover tanto o formato com @ quanto o limpo
                 removido = False
                 if telefone_limpo_reset in clientes_pausados:
                     clientes_pausados = remover_pausado(telefone_limpo_reset)
@@ -603,7 +605,7 @@ def webhook():
 
             if enviada_por_mim: continue
 
-            # --- 4. FILTRO ANTI-ROBÔ (Blindagem Total) ---
+            # --- 4. FILTRO ANTI-ROBÔ ---
             
             # A) DETECÇÃO DE REPETIÇÃO
             if sender in textos_por_usuario and len(textos_por_usuario[sender]) > 0:
@@ -622,7 +624,6 @@ def webhook():
                 "escolha uma das opções", "para continuar", 
                 "opção inválida", "opções abaixo", "opção invalida"
             ]
-            
             if any(termo in texto_cliente.lower() for termo in termos_de_robo): 
                 print(f"--- [IGNORADO] Menu/Robô detectado de {sender}")
                 continue
@@ -658,7 +659,7 @@ def webhook():
             historico_conversas[sender_user].append(f"Cliente: {texto_completo}")
             memoria = "\n".join(historico_conversas[sender_user][-15:]) 
             
-            # --- PROMPT ATUALIZADO (SEM LINK FAKE NA PRIMEIRA MSG) ---
+            # --- PROMPT ATUALIZADO (REGRAS CONFIRMADAS) ---
             instrucoes_base = f"""
             Você é Maria Clara, especialista do SistemClass. 
             Seu tom de voz: Amigável, consultivo, "gente como a gente", mas profissional. Use emojis moderados.
