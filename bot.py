@@ -694,6 +694,7 @@ def webhook():
                - Entregue o Usuário, Senha e Link de Teste.
                - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_TESTE_7_DIAS}"
                - Finalize enviando o Link da Agenda.
+               - Encerre a mensagem com a frase: "Qualquer dúvida estou à disposição!"
                - IMPORTANTE: NÃO envie telefone comercial nesta primeira mensagem. Apenas a Agenda.
             
             2. SE FOR DÚVIDA ESPECÍFICA (O cliente perguntou algo depois da apresentação):
