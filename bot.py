@@ -380,8 +380,9 @@ app = Flask(__name__)
 # ==============================================================================
 # 1. SUAS CHAVES
 # ==============================================================================
-WASENDER_API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00d462"
-GEMINI_API_KEY = "AIzaSyAM2Z3HyOcANDfRq1vr5ROX5QaX8LMBlBg"
+WASENDER_API_KEY = os.environ.get("WASENDER_API_KEY")
+# No topo do arquivo, garanta que tem: import os
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # ==============================================================================
 # 2. INFORMAÇÕES GERAIS

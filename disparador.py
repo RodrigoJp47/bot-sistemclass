@@ -1,11 +1,20 @@
+
 import pandas as pd
 import requests
 import time
 import os
 import random
 from datetime import datetime
+from dotenv import load_dotenv # <--- NOVO: Importa a ferramenta do cofre
 
-API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00d462"
+# Carrega as senhas do arquivo .env
+load_dotenv()
+
+# Pega a chave do cofre. Se não achar, avisa o erro.
+API_KEY = os.getenv("WASENDER_API_KEY")
+if not API_KEY:
+    raise ValueError("ERRO: A chave WASENDER_API_KEY não foi encontrada no arquivo .env!")
+
 API_URL = "https://www.wasenderapi.com/api/send-message"
 NOME_ARQUIVO = "lista_clientes.xlsx"
 TEMPO_MIN = 400
