@@ -497,9 +497,9 @@ def enviar_mensagem(telefone: str, texto: str):
         print(f"Erro ao enviar msg: {e}")
 
 # ==============================================================================
-# 6) Anti-loop (ajustes cirúrgicos)
+# 6) Anti-loop e comandos auxiliares (cirúrgico)
 # ==============================================================================
-# >>> Heurística de velocidade simples por remetente
+# >>> Heurística de velocidade por remetente
 ULTIMO_TS: dict[str, float] = {}
 
 # >>> Kill-switch do cliente
@@ -553,10 +553,10 @@ def webhook():
         clientes_pausados = carregar_pausados()
 
         for msg in messages:
-            key            = msg.get('key', {})
+            key             = msg.get('key', {})
             enviada_por_mim = key.get('fromMe') or msg.get('fromMe')
-            remote_jid     = key.get('remoteJid') or msg.get('from')
-            sender         = remote_jid
+            remote_jid      = key.get('remoteJid') or msg.get('from')
+            sender          = remote_jid
 
             # Mapeia LID -> número real
             if sender and '@lid' in sender:
@@ -621,31 +621,44 @@ def webhook():
                 print(f"--- [SILENCIADO POR CLIENTE] {numero_cli}")
                 continue
 
-            # /pare (admin) – pausa chat atual ou número informado em qualquer formato
+            # >>> /pare — pausa o chat atual SEM número (sempre permite);
+            # >>> com número explícito, exige eh_admin=True
             if comando.startswith("/pare"):
-                if eh_admin:
-                    try:
-                        numero_alvo = sender_limpo  # padrão: pausa o chat atual
-                        alvo_regex = _extrair_numero_digitos(comando)
-                        if alvo_regex:
-                            numero_alvo = alvo_regex
+                try:
+                    alvo_regex = _extrair_numero_digitos(comando)
+                    if alvo_regex:
+                        # /pare <numero> -> só Admin
+                        if not eh_admin:
+                            print(f"--- [NEGADO] /pare com número sem permissão. Sender={sender_limpo}")
+                            enviar_mensagem(sender, "⚠️ Comando negado. /pare <número> só é permitido para Admin.")
+                            continue
+                        numero_alvo = alvo_regex
+                    else:
+                        # /pare (sem número): pausa o chat atual SEMPRE
+                        numero_alvo = sender_limpo
 
-                        if numero_alvo not in clientes_pausados:
-                            clientes_pausados = salvar_pausado(numero_alvo)
-                            print(f"🚫 COMANDO: {numero_alvo} foi silenciado pelo Admin.")
-                            enviar_mensagem(sender, f"✅ Cliente {numero_alvo} SILENCIADO.")
-                        else:
-                            enviar_mensagem(sender, f"⚠️ {numero_alvo} já estava silenciado.")
-                    except Exception as e:
-                        print(f"Erro no comando /pare: {e}")
-                    finally:
-                        continue
-                else:
-                    print(f"--- [ALERTA] Tentativa de /pare negada para {sender_limpo} (Não é admin)")
-                    # enviar_mensagem(sender, "⚠️ Comando negado. Não reconheci você como Admin.")
+                    if numero_alvo not in clientes_pausados:
+                        clientes_pausados = salvar_pausado(numero_alvo)
+                        print(f"🚫 COMANDO: {numero_alvo} foi silenciado. (chat_atual={not bool(alvo_regex)})")
+                        enviar_mensagem(sender, f"✅ Cliente {numero_alvo} SILENCIADO.")
+                    else:
+                        enviar_mensagem(sender, f"⚠️ {numero_alvo} já estava silenciado.")
+                    continue
+                except Exception as e:
+                    print(f"Erro no comando /pare: {e}")
+                    enviar_mensagem(sender, "⚠️ Ocorreu um erro ao processar /pare.")
                     continue
 
-            # /reset (mantido) – limpa memória e “despausa” se estiver pausado
+            # >>> /status — informa se o contato atual está pausado
+            if comando in ("/status", "status"):
+                telefone_limpo = sender.split('@')[0]
+                numero_digitos = "".join(filter(str.isdigit, telefone_limpo))
+                pausado = (telefone_limpo in clientes_pausados) or (numero_digitos in clientes_pausados)
+                estado = "PAUSADO" if pausado else "ATIVO"
+                enviar_mensagem(sender, f"ℹ️ Estado atual deste contato: {estado}.")
+                continue
+
+            # /reset (mantido) – limpa memória e “despausa”
             if comando in ['reset', 'limpar', '/reset', '/limpar']:
                 historico_conversas[sender] = []
                 telefone_limpo_reset = sender.split('@')[0]
@@ -699,12 +712,13 @@ def webhook():
                 continue
 
             # 4.d) Menu numérico curto (ex.: "1", "2", "3")
-            if len(texto_cliente) < 5 and texto_cliente.strip() and texto_cliente.strip()[0].isdigit():
+            t_strip = texto_cliente.strip()
+            if 0 < len(t_strip) < 5 and t_strip[0].isdigit():
                 print(f"--- [IGNORADO] Opção de menu numérico detectada de {sender}")
                 continue
 
             # 5) Verificação de pausa (mantido)
-            telefone_limpo       = sender.split('@')[0]
+            telefone_limpo        = sender.split('@')[0]
             numero_apenas_digitos = "".join(filter(str.isdigit, telefone_limpo))
             if (telefone_limpo in clientes_pausados) or (numero_apenas_digitos in clientes_pausados):
                 print(f"--- [SILENCIADO] Mensagem de {telefone_limpo} ignorada (está pausado).")
@@ -762,7 +776,7 @@ Se ele disser "não temos interesse", "no momento não", "não quero", "já tenh
 - Explique o SistemClass usando os tópicos (bullets).
 - Entregue o Usuário, Senha e Link de Teste.
 - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_TESTE_7_DIAS}"
-- Finalize enviando o Link da Agenda.
+- Finalize enviando o Link da AGENDA.
 - Encerre a mensagem com a frase: "Qualquer dúvida estou à disposição!"
 - IMPORTANTE: NÃO envie telefone comercial nesta primeira mensagem. Apenas a Agenda.
 
