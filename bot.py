@@ -625,21 +625,27 @@ def webhook():
             # /pare <numero>: permite se (a) fromMe=True, ou (b) chat atual é do próprio <numero>, ou (c) eh_admin=True
             if comando.startswith("/pare"):
                 try:
-                    # tenta extrair um número do comando (10 a 14 dígitos)
-                    alvo_regex = _extrair_numero_digitos(comando)
+                    # Em vez de caçar dígitos no texto inteiro, olhamos APENAS o que vier DEPOIS de /pare
+                    tokens = comando.split()
+                    alvo_regex = None
+                    if len(tokens) > 1:
+                        # usuário digitou algo explícito após /pare; extrai só desses tokens posteriores
+                        resto = " ".join(tokens[1:])
+                        m = re.search(r'(\d{10,14})', resto)
+                        if m:
+                            alvo_regex = m.group(1)
 
                     if not alvo_regex:
-                        # /pare (sem número) -> pausa o chat atual SEMPRE
+                        # /pare (sem número) -> pausa o chat atual, sempre
                         numero_alvo = sender_limpo
                         permitido = True
                         motivo = "chat_atual"
                     else:
                         numero_alvo = alvo_regex
-
-                        # Três jeitos de permitir:
-                        # 1) você está digitando a partir da CONTA DO BOT (fromMe True),
-                        # 2) você está no chat do próprio cliente (alvo == sender_limpo),
-                        # 3) você é admin (eh_admin True).
+                        # três jeitos de permitir:
+                        # 1) veio da conta do bot (fromMe=True),
+                        # 2) você está NO chat do próprio cliente (alvo == sender_limpo),
+                        # 3) você é admin (eh_admin=True).
                         permitido = bool(enviada_por_mim) or (numero_alvo == sender_limpo) or bool(eh_admin)
                         motivo = (
                             "fromMe" if enviada_por_mim else
