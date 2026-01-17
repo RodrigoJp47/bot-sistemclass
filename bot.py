@@ -454,7 +454,7 @@ TOPICOS_APRESENTACAO = """
  - Gestão Interna: Gestão de contratos e tarefas (estilo Trello/Playbpo).
  - Gestão Operacional: Contas a pagar/receber, conciliação, notas fiscais.
  - Gestão Estratégica (BI): Dashboards em tempo real, DRE Gerencial, Fluxo de Caixa, KPIs e Valuation automático.
-4. DIFERENCIAIS: API com Conta Azul, Omie, Nibo. Geração de insights e laudos financeiros. Compatível com exportação para Domínio Sistemas.
+4. DIFERENCIAIS: API com Conta Azul, Omie, Nibo. Geração de insights e laudos financeiros.
 """
 
 INFO_PRODUTO = f"""
