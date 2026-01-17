@@ -383,58 +383,58 @@ import re
 app = Flask(__name__)
 
 # ==============================================================================
-# 1) CHAVES (via variáveis de ambiente)
+# 1. SUAS CHAVES
 # ==============================================================================
 WASENDER_API_KEY = os.environ.get("WASENDER_API_KEY")
 GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY")
 
 # ==============================================================================
-# 2) DADOS DO SISTEMA / CONFIGURAÇÃO
+# 2. INFORMAÇÕES GERAIS
 # ==============================================================================
 NOME_EMPRESA  = "SistemClass"
 LINK_LANDING  = "https://sistemclass.com.br"
 LINK_AGENDA   = "https://calendly.com/sistemclassoficial"
 
-# Transbordo
+# --- CONFIGURAÇÃO DE TRANSBORDO ---
 NUMERO_ADMIN   = "5531993413530"
 PALAVRAS_CHAVE = ["atendente", "humano", "falar com alguém", "especialista", "pessoa"]
 
-# Pausados (persistência)
+# ARQUIVO PARA SALVAR OS BLOQUEADOS (PERSISTÊNCIA)
 ARQUIVO_PAUSADOS = "pausados.json"
 
 def carregar_pausados():
-    """Lê a lista de pausados do arquivo para não perder ao reiniciar."""
+    """Lê a lista de pausados do arquivo para não perder se reiniciar"""
     if os.path.exists(ARQUIVO_PAUSADOS):
         try:
-            with open(ARQUIVO_PAUSADOS, "r", encoding="utf-8") as f:
+            with open(ARQUIVO_PAUSADOS, 'r', encoding="utf-8") as f:
                 return json.load(f)
         except:
             return []
     return []
 
 def salvar_pausado(numero: str):
-    """Adiciona um número na lista e salva no arquivo."""
+    """Adiciona um número na lista e salva no arquivo"""
     lista = carregar_pausados()
     if numero not in lista:
         lista.append(numero)
-        with open(ARQUIVO_PAUSADOS, "w", encoding="utf-8") as f:
+        with open(ARQUIVO_PAUSADOS, 'w', encoding="utf-8") as f:
             json.dump(lista, f, ensure_ascii=False)
     return lista
 
 def remover_pausado(numero: str):
-    """Remove um número e salva."""
+    """Remove um número e salva"""
     lista = carregar_pausados()
     if numero in lista:
         lista.remove(numero)
-        with open(ARQUIVO_PAUSADOS, "w", encoding="utf-8") as f:
+        with open(ARQUIVO_PAUSADOS, 'w', encoding="utf-8") as f:
             json.dump(lista, f, ensure_ascii=False)
     return lista
 
-# Carrega na memória ao subir
+# Carrega a lista ao iniciar
 clientes_pausados = carregar_pausados()
 
 # ==============================================================================
-# 3) TEXTOS (mantidos)
+# 3. TEXTOS E BASE DE CONHECIMENTO  (MEMÓRIA ORIGINAL)
 # ==============================================================================
 DADOS_ACESSO = f"""
 Link: {LINK_LANDING}
@@ -468,20 +468,19 @@ PREÇOS (Apenas se perguntarem):
 """
 
 # ==============================================================================
-# 4) GEMINI (mantido)
+# 4. GEMINI (inalterado)
 # ==============================================================================
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-flash-latest')
 
-# Memória e mapeamento
-historico_conversas: dict[str, list[str]] = {}
-mapa_ids: dict[str, str] = {}
+historico_conversas = {}
+mapa_ids = {}
 
 # ==============================================================================
-# 5) Envio de mensagem (mantido)
+# 5. Envio de mensagem (inalterado)
 # ==============================================================================
-def enviar_mensagem(telefone: str, texto: str):
+def enviar_mensagem(telefone, texto):
     url = "https://www.wasenderapi.com/api/send-message"
     phone = telefone.split('@')[0]
     if not phone.startswith('+'):
@@ -497,17 +496,18 @@ def enviar_mensagem(telefone: str, texto: str):
         print(f"Erro ao enviar msg: {e}")
 
 # ==============================================================================
-# 6) Anti-loop e comandos auxiliares (cirúrgico)
+# 6. AJUSTES OPERACIONAIS (anti-loop + comandos)
 # ==============================================================================
-# >>> Heurística de velocidade por remetente
+
+# Heurística de velocidade por remetente (anti-bot)
 ULTIMO_TS: dict[str, float] = {}
 
-# >>> Kill-switch do cliente
+# Kill-switch do cliente
 STOP_COMMANDS_CLIENTE = {
     "pare", "/pare", "parar", "stop", "/stop", "cancelar", "chega", "silenciar", "/silenciar", "mute", "/mute"
 }
 
-# >>> Vocabulário extra de “menu/robô” (somado ao que você já tinha)
+# Vocabulário extra de “menu/robô” (somado ao que você já tinha)
 TERMOS_ROBO_EXTRA = [
     "responda com", "clique", "clique no link", "autoatendimento", "press", "pressione",
     "para falar com um atendente", "para falar com atendente", "opção 1)", "opção 2)",
@@ -524,7 +524,7 @@ def _extrair_numero_digitos(texto: str) -> str | None:
     return m.group(1) if m else None
 
 # ==============================================================================
-# 7) Webhook
+# 7. Webhook
 # ==============================================================================
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -547,9 +547,9 @@ def webhook():
         if not messages:
             return jsonify({"status": "ignored"}), 200
 
-        textos_por_usuario: dict[str, list[str]] = {}
+        textos_por_usuario = {}
 
-        # Recarrega pausados do arquivo (mantém sincronia)
+        # Garante que a lista está atualizada com o arquivo
         clientes_pausados = carregar_pausados()
 
         for msg in messages:
@@ -568,7 +568,7 @@ def webhook():
                         mapa_ids[remote_jid] = real_number
                         sender = real_number
 
-            # >>> Ignora grupos (evita prender em menus de grupo)
+            # IGNORA GRUPOS (evita prender em menus de grupo)
             if sender and str(sender).endswith('@g.us'):
                 print(f"--- [INFO] Mensagem de grupo ignorada: {sender}")
                 continue
@@ -580,17 +580,16 @@ def webhook():
             msg_content = msg.get('message', {})
             texto_cliente = ''
 
-            # 1) Bloqueio de áudio (mantido)
+            # --- 1. BLOQUEIO DE ÁUDIO (original)
             if tipo_msg == 'audio' or 'audioMessage' in msg_content:
                 if enviada_por_mim:
                     continue
-                msg_bloqueio = ("Desculpe, ainda não consigo ouvir áudios por aqui. 🎧 "
-                                "Poderia escrever sua dúvida por favor? Assim consigo te responder rapidinho! 😊")
+                msg_bloqueio = "Desculpe, ainda não consigo ouvir áudios por aqui. 🎧 Poderia escrever sua dúvida por favor? Assim consigo te responder rapidinho! 😊"
                 enviar_mensagem(sender, msg_bloqueio)
                 historico_conversas[sender].append(f"Maria Clara: {msg_bloqueio}")
                 continue
 
-            # 2) Extração de texto (mantido)
+            # --- 2. EXTRAÇÃO DE TEXTO (original)
             if 'conversation' in msg:
                 texto_cliente = msg['conversation']
             elif 'messageBody' in msg:
@@ -603,16 +602,16 @@ def webhook():
             if not texto_cliente:
                 continue
 
-            # 3) Comandos (admin e cliente)
+            # --- 3. COMANDOS DE ADMIN / CLIENTE ---
             sender_limpo = "".join(filter(str.isdigit, str(sender)))
             admin_limpo  = "".join(filter(str.isdigit, NUMERO_ADMIN))
-            print(f"--- [DEBUG] Sender: {sender_limpo} | Admin: {admin_limpo} | FromMe: {enviada_por_mim}")
+            print(f"--- [DEBUG] Sender: {sender_limpo} \n Admin: {admin_limpo} \n FromMe: {enviada_por_mim}")
 
-            # É admin se: veio "fromMe" OU número bate (com/sem 55)
+            # É admin se: veio fromMe OU número bate (com/sem 55)
             eh_admin = bool(enviada_por_mim) or (admin_limpo in sender_limpo) or (sender_limpo in admin_limpo)
             comando  = texto_cliente.lower().strip()
 
-            # >>> Kill-switch do CLIENTE (além do admin)
+            # Kill-switch do CLIENTE (semelhante ao /pare, mas para o próprio cliente)
             if comando in STOP_COMMANDS_CLIENTE:
                 telefone_limpo_cli = sender.split('@')[0]
                 numero_cli = "".join(filter(str.isdigit, telefone_limpo_cli))
@@ -621,21 +620,18 @@ def webhook():
                 print(f"--- [SILENCIADO POR CLIENTE] {numero_cli}")
                 continue
 
-            # >>> /pare — pausa o chat atual SEM número (sempre permite);
-            # >>> com número explícito, exige eh_admin=True
+            # /pare — SEM número: SEMPRE pausa o chat atual; COM número: exige admin
             if comando.startswith("/pare"):
                 try:
                     alvo_regex = _extrair_numero_digitos(comando)
                     if alvo_regex:
-                        # /pare <numero> -> só Admin
                         if not eh_admin:
                             print(f"--- [NEGADO] /pare com número sem permissão. Sender={sender_limpo}")
                             enviar_mensagem(sender, "⚠️ Comando negado. /pare <número> só é permitido para Admin.")
                             continue
                         numero_alvo = alvo_regex
                     else:
-                        # /pare (sem número): pausa o chat atual SEMPRE
-                        numero_alvo = sender_limpo
+                        numero_alvo = sender_limpo  # pausa chat atual
 
                     if numero_alvo not in clientes_pausados:
                         clientes_pausados = salvar_pausado(numero_alvo)
@@ -649,7 +645,7 @@ def webhook():
                     enviar_mensagem(sender, "⚠️ Ocorreu um erro ao processar /pare.")
                     continue
 
-            # >>> /status — informa se o contato atual está pausado
+            # /status — informa se o contato atual está pausado
             if comando in ("/status", "status"):
                 telefone_limpo = sender.split('@')[0]
                 numero_digitos = "".join(filter(str.isdigit, telefone_limpo))
@@ -658,7 +654,7 @@ def webhook():
                 enviar_mensagem(sender, f"ℹ️ Estado atual deste contato: {estado}.")
                 continue
 
-            # /reset (mantido) – limpa memória e “despausa”
+            # COMANDO /RESET (original)
             if comando in ['reset', 'limpar', '/reset', '/limpar']:
                 historico_conversas[sender] = []
                 telefone_limpo_reset = sender.split('@')[0]
@@ -680,8 +676,8 @@ def webhook():
             if enviada_por_mim:
                 continue
 
-            # 4) FILTRO ANTI-ROBÔ (refinado)
-            # 4.a) Velocidade (mensagens < 2s do mesmo remetente)
+            # --- 4. FILTRO ANTI-ROBÔ (refinado, mas mantendo seu espírito) ---
+            # A) Velocidade (<2s)
             ts_now = _agora()
             ultimo = ULTIMO_TS.get(sender)
             ULTIMO_TS[sender] = ts_now
@@ -689,14 +685,14 @@ def webhook():
                 print(f"--- [IGNORADO] Mensagens muito rápidas de {sender} (possível robô).")
                 continue
 
-            # 4.b) Repetição imediata
+            # B) Repetição imediata
             if sender in textos_por_usuario and len(textos_por_usuario[sender]) > 0:
                 ultima_msg = textos_por_usuario[sender][-1]
                 if texto_cliente.strip() == ultima_msg.strip():
                     print(f"--- [IGNORADO] Loop de repetição detectado de {sender}")
                     continue
 
-            # 4.c) Lista negra (somamos os seus termos + extras)
+            # C) Lista negra (sua lista + extras)
             termos_de_robo = [
                 "digite a opção", "digite o número", "menu principal",
                 "atendimento eletrônico", "atendimento virtual", "assistente virtual",
@@ -711,93 +707,80 @@ def webhook():
                 print(f"--- [IGNORADO] Menu/Robô detectado de {sender}")
                 continue
 
-            # 4.d) Menu numérico curto (ex.: "1", "2", "3")
+            # D) Menu numérico curto
             t_strip = texto_cliente.strip()
             if 0 < len(t_strip) < 5 and t_strip[0].isdigit():
-                print(f"--- [IGNORADO] Opção de menu numérico detectada de {sender}")
+                print(f"--- [IGNORADO] Opção de Menu numérico detectada de {sender}")
                 continue
 
-            # 5) Verificação de pausa (mantido)
+            # --- 5. VERIFICAÇÃO DE PAUSA (TRANSBORDO) ---
             telefone_limpo        = sender.split('@')[0]
             numero_apenas_digitos = "".join(filter(str.isdigit, telefone_limpo))
             if (telefone_limpo in clientes_pausados) or (numero_apenas_digitos in clientes_pausados):
                 print(f"--- [SILENCIADO] Mensagem de {telefone_limpo} ignorada (está pausado).")
                 continue
 
-            # Transbordo por palavras-chave (mantido)
-            if any(p in texto_cliente.lower() for p in PALAVRAS_CHAVE):
+            # Transbordo por palavras-chave (original)
+            if any(palavra in texto_cliente.lower() for palavra in PALAVRAS_CHAVE):
                 clientes_pausados = salvar_pausado(numero_apenas_digitos)
                 enviar_mensagem(sender, "Entendido. Um especialista humano vai seguir com seu atendimento. Aguarde um momento! 👨‍💻")
                 enviar_mensagem(NUMERO_ADMIN, f"🚨 ALERTA TRANSBORDO!\nCliente: {telefone_limpo}\nDisse: {texto_cliente}")
                 continue
 
-            # Agrupa por usuário para processar com o Gemini
-            textos_por_usuario.setdefault(sender, []).append(texto_cliente)
+            if sender not in textos_por_usuario:
+                textos_por_usuario[sender] = []
+            textos_por_usuario[sender].append(texto_cliente)
 
         # ======================================================================
-        # LÓGICA DO GEMINI (mantida com suas regras)
+        # LÓGICA DO GEMINI  (PROMPT ORIGINAL INALTERADO)
         # ======================================================================
         for sender_user, lista_msgs in textos_por_usuario.items():
             texto_completo = " ".join(lista_msgs)
             historico_conversas[sender_user].append(f"Cliente: {texto_completo}")
-            memoria = "\n".join(historico_conversas[sender_user][-15:])  # últimas 15 interações
+            memoria = "\n".join(historico_conversas[sender_user][-15:])
 
             instrucoes_base = f"""
-Você é Maria Clara, especialista do {NOME_EMPRESA}.
-Seu tom de voz: Amigável, consultivo, "gente como a gente", mas profissional. Use emojis moderados.
-
-DADOS SOBRE O PRODUTO:
-{TOPICOS_APRESENTACAO}
-
-REGRAS TÉCNICAS:
-{INFO_PRODUTO}
-
-DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
-{DADOS_ACESSO}
-
-LINK DA AGENDA: {LINK_AGENDA}
-AVISO IMPORTANTE (7 DIAS): "{TEXTO_TESTE_7_DIAS}"
-
-HISTÓRICO RECENTE:
-{memoria}
-
-O QUE O CLIENTE DISSE AGORA: "{texto_completo}"
-
-# DIRETRIZES ESTRITAS DE RESPOSTA (SIGA ESTA ORDEM):
-
-0. REGRA SUPREMA (FILTRO DE RECUSA):
-Analise a frase INTEIRA do cliente.
-Se ele disser "não temos interesse", "no momento não", "não quero", "já tenho", "agradeço mas não":
--> IGNORE qualquer "Bom dia" ou "Tudo bem" que vier junto.
--> Vá direto para a regra 3 (DESINTERESSE).
-
-1. SE FOR FASE DE INTERESSE (Primeiro contato / "Sim", "Quem é", "Como funciona"):
-- Comece com uma frase humana e acolhedora.
-- Explique o SistemClass usando os tópicos (bullets).
-- Entregue o Usuário, Senha e Link de Teste.
-- OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_TESTE_7_DIAS}"
-- Finalize enviando o Link da AGENDA.
-- Encerre a mensagem com a frase: "Qualquer dúvida estou à disposição!"
-- IMPORTANTE: NÃO envie telefone comercial nesta primeira mensagem. Apenas a Agenda.
-
-2. SE FOR DÚVIDA ESPECÍFICA (o cliente perguntou algo depois da apresentação):
-- Responda direto ao ponto.
-- Se o cliente perguntar PREÇO, PLANOS ou demonstrar interesse em FECHAR:
--> Além de responder, diga: "Se preferir falar direto com nosso Comercial, chame no WhatsApp (31) 99341-3530 ou agende um horário no link acima!"
-
-3. SE FOR DESINTERESSE:
-- Responda apenas: "Entendido! Agradeço o retorno e desejo muito sucesso. Um abraço! 👋"
-- NÃO tente vender nada.
-
-IMPORTANTE: JAMAIS escreva "Passo A:", "Passo B:". Apenas o texto corrido.
-"""
+ Você é Maria Clara, especialista do SistemClass.
+ Seu tom de voz: Amigável, consultivo, "gente como a gente", mas profissional. Use emojis moderados.
+ DADOS SOBRE O PRODUTO:
+ {TOPICOS_APRESENTACAO}
+ REGRAS TÉCNICAS:
+ {INFO_PRODUTO}
+ DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
+ {DADOS_ACESSO}
+ LINK DA AGENDA: {LINK_AGENDA}
+ AVISO IMPORTANTE (7 DIAS): "{TEXTO_TESTE_7_DIAS}"
+ HISTÓRICO RECENTE:
+ {memoria}
+ O QUE O CLIENTE DISSE AGORA: "{texto_completo}"
+ # DIRETRIZES ESTRITAS DE RESPOSTA (SIGA ESTA ORDEM):
+ 0. REGRA SUPREMA (FILTRO DE RECUSA):
+ Analise a frase INTEIRA do cliente.
+ Se ele disser "não temos interesse", "no momento não", "não quero", "já tenho", "agradeço mas não":
+ -> IGNORE qualquer "Bom dia" ou "Tudo bem" que vier junto.
+ -> Vá direto para a regra 3 (DESINTERESSE).
+ 1. SE FOR FASE DE INTERESSE (E não houver recusa):
+ (Ex: "Sim", "Quem é", "Pode falar", "Bom dia, como funciona?"):
+ - Comece com uma frase humana e acolhedora (ex: "Que maravilha!").
+ - Explique o SistemClass usando os tópicos (bullets).
+ - Entregue o Usuário, Senha e Link de Teste.
+ - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_TESTE_7_DIAS}"
+ - Finalize enviando o Link da Agenda.
+ - OBRIGATÓRIO: Abaixo da Agenda, ofereça falar agora com o Comercial usando este link: https://wa.me/5531993413530?text=Olá,%20tenho%20interesse%20e%20gostaria%20de%20falar%20com%20o%20comercial!
+ 2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
+ 3. SE FOR DESINTERESSE:
+ - Responda apenas: "Entendido! Agradeço o retorno e desejo muito sucesso. Um abraço! 👋"
+ - NÃO tente vender nada.
+ IMPORTANTE: JAMAIS escreva "Passo A:", "Passo B:". Apenas o texto corrido.
+ """
             try:
                 time.sleep(1)
                 response = model.generate_content(instrucoes_base)
-                resposta_bot = (response.text or "").strip()
+                resposta_bot = response.text.strip()
                 # limpeza de rótulos indesejados
-                for lixo in ("**Passo A**", "Passo A:", "**Passo B**", "Passo B:"):
-                    resposta_bot = resposta_bot.replace(lixo, "")
+                resposta_bot = (resposta_bot
+                                .replace("**Passo A**", "").replace("Passo A:", "")
+                                .replace("**Passo B**", "").replace("Passo B:", ""))
                 print(f"--- [MARIA CLARA] {resposta_bot}")
                 historico_conversas[sender_user].append(f"Maria Clara: {resposta_bot}")
                 enviar_mensagem(sender_user, resposta_bot)
@@ -808,7 +791,6 @@ IMPORTANTE: JAMAIS escreva "Passo A:", "Passo B:". Apenas o texto corrido.
         print(f"--- [ERRO GERAL] {e}")
 
     return jsonify({"status": "ok"}), 200
-
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
