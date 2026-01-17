@@ -620,30 +620,52 @@ def webhook():
                 print(f"--- [SILENCIADO POR CLIENTE] {numero_cli}")
                 continue
 
-            # /pare — SEM número: SEMPRE pausa o chat atual; COM número: exige admin
+            
+            # /pare — SEM número: SEMPRE pausa o chat atual;
+            # /pare <numero>: permite se (a) fromMe=True, ou (b) chat atual é do próprio <numero>, ou (c) eh_admin=True
             if comando.startswith("/pare"):
                 try:
+                    # tenta extrair um número do comando (10 a 14 dígitos)
                     alvo_regex = _extrair_numero_digitos(comando)
-                    if alvo_regex:
-                        if not eh_admin:
-                            print(f"--- [NEGADO] /pare com número sem permissão. Sender={sender_limpo}")
-                            enviar_mensagem(sender, "⚠️ Comando negado. /pare <número> só é permitido para Admin.")
-                            continue
-                        numero_alvo = alvo_regex
+
+                    if not alvo_regex:
+                        # /pare (sem número) -> pausa o chat atual SEMPRE
+                        numero_alvo = sender_limpo
+                        permitido = True
+                        motivo = "chat_atual"
                     else:
-                        numero_alvo = sender_limpo  # pausa chat atual
+                        numero_alvo = alvo_regex
+
+                        # Três jeitos de permitir:
+                        # 1) você está digitando a partir da CONTA DO BOT (fromMe True),
+                        # 2) você está no chat do próprio cliente (alvo == sender_limpo),
+                        # 3) você é admin (eh_admin True).
+                        permitido = bool(enviada_por_mim) or (numero_alvo == sender_limpo) or bool(eh_admin)
+                        motivo = (
+                            "fromMe" if enviada_por_mim else
+                            "chat_alvo" if (numero_alvo == sender_limpo) else
+                            "admin" if eh_admin else "negado"
+                        )
+
+                    print(f"--- [/pare] alvo={numero_alvo} | sender={sender_limpo} | fromMe={enviada_por_mim} | eh_admin={eh_admin} | motivo={motivo}")
+
+                    if not permitido:
+                        enviar_mensagem(sender, "⚠️ Comando negado. /pare <número> só é permitido para Admin ou no chat do próprio cliente.")
+                        continue
 
                     if numero_alvo not in clientes_pausados:
                         clientes_pausados = salvar_pausado(numero_alvo)
-                        print(f"🚫 COMANDO: {numero_alvo} foi silenciado. (chat_atual={not bool(alvo_regex)})")
+                        print(f"🚫 COMANDO: {numero_alvo} foi silenciado. (motivo={motivo})")
                         enviar_mensagem(sender, f"✅ Cliente {numero_alvo} SILENCIADO.")
                     else:
                         enviar_mensagem(sender, f"⚠️ {numero_alvo} já estava silenciado.")
                     continue
+
                 except Exception as e:
                     print(f"Erro no comando /pare: {e}")
                     enviar_mensagem(sender, "⚠️ Ocorreu um erro ao processar /pare.")
                     continue
+
 
             # /status — informa se o contato atual está pausado
             if comando in ("/status", "status"):
