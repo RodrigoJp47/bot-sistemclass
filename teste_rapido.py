@@ -1,37 +1,55 @@
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --- CONFIGURAÇÕES ---
-API_KEY = "87cc26577dac7e7b62287fb2e3e54f40397395679518a15d1d731e041d00d462"
+API_KEY = os.getenv("WASENDER_API_KEY")
 API_URL = "https://www.wasenderapi.com/api/send-message"
+MEU_NUMERO = "5531993111538" 
 
-# ⚠️ COLOQUE SEU NÚMERO AQUI (COM 55 + DDD) ⚠️
-MEU_NUMERO = "5531993413530"  
+# Link do seu PDF no Render
+LINK_PDF = "https://sistemclass.com.br/static/apresentacao.pdf"
 
-# A MESMA MENSAGEM DO DISPARADOR OFICIAL
-MENSAGEM_ISCA = """Olá! Tudo bem?
+# A Mensagem que o cliente vai receber
+MENSAGEM_TESTE = f"""Olá! Teste de Envio (Link no Texto).
 
-Vi que você atua com BPO Financeiro. Uma dúvida rápida:
+Como o envio de arquivo direto estava instável, estamos testando o envio do link seguro.
 
-Como você apresenta os resultados dos seus clientes ? 
+👇 Toque abaixo para baixar a apresentação:
+{LINK_PDF}
 
-Nós criamos um sistema que gera BI ( Business Intelligence ) em tempo real para o seu cliente. 
-
-DRE Gerêncial/Fluxo de Caixa  e Dashboards automáticos para te tirar do operacional e gerar valor na sua operação. 
-
-Posso te liberar um acesso teste gratuito para você ver como funciona por dentro?"""
+Se essa mensagem chegou e o link abriu, estamos prontos! 🚀"""
 
 def enviar_teste():
-    payload = {"to": MEU_NUMERO, "text": MENSAGEM_ISCA}
+    print(f"--- Testando Envio de Texto com Link ---")
+    
+    # PAYLOAD SIMPLES (O que a API pediu o tempo todo)
+    # Não usamos 'document_url', usamos apenas 'text'
+    payload = {
+        "to": MEU_NUMERO, 
+        "text": MENSAGEM_TESTE
+    }
+    
     headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
 
-    print(f"🚀 Enviando Isca de Teste para {MEU_NUMERO}...")
+    print(f"🚀 Enviando para {MEU_NUMERO}...")
+    
     try:
-        response = requests.post(API_URL, json=payload, headers=headers)
-        print(f"Status: {response.status_code}")
-        print(f"Resposta API: {response.text}")
-        print("\n✅ Agora verifique seu WhatsApp e responda para testar a Maria Clara!")
+        response = requests.post(API_URL, json=payload, headers=headers, timeout=30)
+        
+        print(f"Status Code: {response.status_code}")
+        print(f"Resposta: {response.text}")
+        
+        if response.status_code in [200, 201]:
+            print("\n✅ SUCESSO! Verifique seu WhatsApp.")
+            print("Dica: Veja se o WhatsApp gerou uma 'prévia' (card) do link automaticamente.")
+        else:
+             print(f"\n❌ Erro: {response.text}")
+
     except Exception as e:
-        print(f"Erro: {e}")
+        print(f"❌ Erro: {e}")
 
 if __name__ == "__main__":
     enviar_teste()
