@@ -23,7 +23,7 @@ GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY")
 # ==============================================================================
 NOME_EMPRESA  = "SistemClass"
 LINK_LANDING  = "https://sistemclass.com.br"
-LINK_AGENDA   = "https://calendly.com/sistemclassoficial"
+
 
 # --- CONFIGURAÇÃO DE TRANSBORDO ---
 NUMERO_ADMIN   = "5531993413530"
@@ -406,7 +406,6 @@ def webhook():
  {INFO_PRODUTO}
  DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
  {DADOS_ACESSO}
- LINK DA AGENDA: {LINK_AGENDA}
  AVISO IMPORTANTE (7 DIAS): "{TEXTO_TESTE_7_DIAS}"
  HISTÓRICO RECENTE:
  {memoria}
@@ -423,8 +422,7 @@ def webhook():
  - Explique o SistemClass usando os tópicos (bullets).
  - Entregue o Usuário, Senha e Link de Teste.
  - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_TESTE_7_DIAS}"
- - Finalize enviando o Link da Agenda.
- - OBRIGATÓRIO: Abaixo da Agenda, ofereça falar agora com o Comercial usando este link: https://wa.me/5531993413530?text=Olá,%20tenho%20interesse%20e%20gostaria%20de%20falar%20com%20o%20comercial!
+ - OBRIGATÓRIO: Ao final, ofereça falar agora com o Comercial diretamente pelo WhatsApp 🟢: (31) 99341-3530 (apenas texto, não gere links).
  2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
  3. SE FOR DESINTERESSE:
  - Responda apenas: "Entendido! Agradeço o retorno e desejo muito sucesso. Um abraço! 👋"
