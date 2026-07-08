@@ -199,7 +199,23 @@ TERMOS_ROBO_EXTRA = [
     "para falar com um atendente", "para falar com atendente", "opção 1)", "opção 2)",
     "selecione uma opção", "menu de opções", "ura", "ura.", "voltar ao menu",
     "para continuar digite", "digite seu cpf", "digite seu cnpj", "protocolo",
-    "este número não recebe mensagens", "mensagem automática"
+    "este número não recebe mensagens", "mensagem automática",
+    # Mensagens automáticas de ausência (respostas de "fora do horário")
+    "nossa equipe não está disponível",
+    "equipe não está disponível no momento",
+    "não estamos disponíveis no momento",
+    "no momento não estamos disponíveis",
+    "horário de atendimento é",
+    "nosso horário de funcionamento é",
+    "responderemos assim que possível",
+    "retornaremos assim que possível",
+    "responderemos em breve",
+    "retornaremos em breve",
+    "retornaremos o contato em breve",
+    "deixe sua mensagem",
+    "deixe a sua mensagem",
+    "fora do horário de atendimento",
+    "fora do nosso horário"
 ]
 
 def _agora() -> float:
