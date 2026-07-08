@@ -10,6 +10,7 @@ import time
 import os
 import json
 import re
+import threading
 
 app = Flask(__name__)
 
@@ -188,6 +189,12 @@ def enviar_mensagem(telefone, texto):
 # Heurística de velocidade por remetente (anti-bot)
 ULTIMO_TS: dict[str, float] = {}
 
+# --- DEBOUNCE (agrupamento de mensagens em sequência) ---
+DEBOUNCE_SEGUNDOS = 10  # espera X segundos de silêncio do cliente antes de responder
+buffer_mensagens: dict[str, list] = {}
+timers_debounce: dict[str, threading.Timer] = {}
+lock_debounce = threading.Lock()
+
 # Kill-switch do cliente
 STOP_COMMANDS_CLIENTE = {
     "pare", "/pare", "parar", "stop", "/stop", "cancelar", "chega", "silenciar", "/silenciar", "mute", "/mute"
@@ -224,6 +231,73 @@ def _agora() -> float:
 def _extrair_numero_digitos(texto: str) -> str | None:
     m = re.search(r'(\d{10,14})', texto or "")
     return m.group(1) if m else None
+
+# ==============================================================================
+# 6.5. RESPOSTA COM DEBOUNCE (chamada pelo cronômetro quando o cliente para de enviar)
+# ==============================================================================
+def responder_com_gemini(sender_user):
+    """Junta as mensagens acumuladas do contato e gera UMA única resposta."""
+    with lock_debounce:
+        lista_msgs = buffer_mensagens.pop(sender_user, [])
+        timers_debounce.pop(sender_user, None)
+    if not lista_msgs:
+        return
+
+    if sender_user not in historico_conversas:
+        historico_conversas[sender_user] = []
+
+    texto_completo = " ".join(lista_msgs)
+    historico_conversas[sender_user].append(f"Cliente: {texto_completo}")
+    memoria = "\n".join(historico_conversas[sender_user][-15:])
+
+    instrucoes_base = f"""
+ Você é Maria Clara, especialista do SistemClass.
+ Seu tom de voz: Amigável, consultivo, "gente como a gente", mas profissional. Use emojis moderados.
+ DADOS SOBRE O PRODUTO:
+ {TOPICOS_APRESENTACAO}
+ REGRAS TÉCNICAS:
+ {INFO_PRODUTO}
+ DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
+ {DADOS_ACESSO}
+ AVISO SOBRE O ACESSO DEMO: "{TEXTO_ACESSO_DEMO}"
+ HISTÓRICO RECENTE:
+ {memoria}
+ O QUE O CLIENTE DISSE AGORA: "{texto_completo}"
+ # DIRETRIZES ESTRITAS DE RESPOSTA (SIGA ESTA ORDEM):
+ 0. REGRA SUPREMA (FILTRO DE RECUSA):
+ Analise a frase INTEIRA do cliente.
+ Se ele disser "não temos interesse", "no momento não", "não quero", "já tenho", "agradeço mas não":
+ -> IGNORE qualquer "Bom dia" ou "Tudo bem" que vier junto.
+ -> Vá direto para a regra 3 (DESINTERESSE).
+ 1. SE FOR FASE DE INTERESSE (E não houver recusa):
+ (Ex: "Sim", "Quem é", "Pode falar", "Bom dia, como funciona?"):
+ - Comece com uma frase humana e acolhedora (ex: "Que maravilha!").
+ - Explique o SistemClass usando os tópicos (bullets).
+ - Entregue o Usuário, Senha e Link de Teste.
+ - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_ACESSO_DEMO}"
+ - OBRIGATÓRIO: Ao final, ofereça as duas opções: falar agora com o Comercial pelo WhatsApp 🟢 (31) 99341-3530 OU agendar uma apresentação on-line de 30 minutos pelo link {LINK_AGENDAMENTO} (apenas texto, não gere links formatados).
+ 2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
+ 2.1. SE O CLIENTE PEDIR APRESENTAÇÃO, DEMONSTRAÇÃO AO VIVO, REUNIÃO, CALL OU FALAR EM "AGENDAR":
+ - Envie o link de agendamento: {LINK_AGENDAMENTO}
+ - Explique que ele escolhe o melhor dia e horário, a apresentação é on-line de 30 minutos e o link da reunião chega no e-mail dele na hora (apenas texto, não gere links formatados).
+ 3. SE FOR DESINTERESSE:
+ - Responda apenas: "Entendido! Agradeço o retorno e desejo muito sucesso. Um abraço! 👋"
+ - NÃO tente vender nada.
+ IMPORTANTE: JAMAIS escreva "Passo A:", "Passo B:". Apenas o texto corrido.
+ """
+    try:
+        time.sleep(1)
+        response = model.generate_content(instrucoes_base)
+        resposta_bot = response.text.strip()
+        # limpeza de rótulos indesejados
+        resposta_bot = (resposta_bot
+                        .replace("**Passo A**", "").replace("Passo A:", "")
+                        .replace("**Passo B**", "").replace("Passo B:", ""))
+        print(f"--- [MARIA CLARA] {resposta_bot}")
+        historico_conversas[sender_user].append(f"Maria Clara: {resposta_bot}")
+        enviar_mensagem(sender_user, resposta_bot)
+    except Exception as e:
+        print(f"Erro Gemini: {e}")
 
 # ==============================================================================
 # 7. Webhook
@@ -416,8 +490,8 @@ def webhook():
                 continue
 
             # B) Repetição imediata
-            if sender in textos_por_usuario and len(textos_por_usuario[sender]) > 0:
-                ultima_msg = textos_por_usuario[sender][-1]
+            if sender in buffer_mensagens and len(buffer_mensagens[sender]) > 0:
+                ultima_msg = buffer_mensagens[sender][-1]
                 if texto_cliente.strip() == ultima_msg.strip():
                     print(f"--- [IGNORADO] Loop de repetição detectado de {sender}")
                     continue
@@ -457,66 +531,22 @@ def webhook():
                 enviar_mensagem(NUMERO_ADMIN, f"🚨 ALERTA TRANSBORDO!\nCliente: {telefone_limpo}\nDisse: {texto_cliente}")
                 continue
 
-            if sender not in textos_por_usuario:
-                textos_por_usuario[sender] = []
-            textos_por_usuario[sender].append(texto_cliente)
+            # --- DEBOUNCE: acumula a mensagem e (re)inicia o cronômetro ---
+            with lock_debounce:
+                if sender not in buffer_mensagens:
+                    buffer_mensagens[sender] = []
+                buffer_mensagens[sender].append(texto_cliente)
+                timer_antigo = timers_debounce.get(sender)
+                if timer_antigo:
+                    timer_antigo.cancel()
+                novo_timer = threading.Timer(DEBOUNCE_SEGUNDOS, responder_com_gemini, args=[sender])
+                novo_timer.daemon = True
+                novo_timer.start()
+                timers_debounce[sender] = novo_timer
 
         # ======================================================================
-        # LÓGICA DO GEMINI  (PROMPT ORIGINAL INALTERADO)
+        # LÓGICA DO GEMINI: movida para responder_com_gemini(), acionada pelo debounce
         # ======================================================================
-        for sender_user, lista_msgs in textos_por_usuario.items():
-            texto_completo = " ".join(lista_msgs)
-            historico_conversas[sender_user].append(f"Cliente: {texto_completo}")
-            memoria = "\n".join(historico_conversas[sender_user][-15:])
-
-            instrucoes_base = f"""
- Você é Maria Clara, especialista do SistemClass.
- Seu tom de voz: Amigável, consultivo, "gente como a gente", mas profissional. Use emojis moderados.
- DADOS SOBRE O PRODUTO:
- {TOPICOS_APRESENTACAO}
- REGRAS TÉCNICAS:
- {INFO_PRODUTO}
- DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
- {DADOS_ACESSO}
- AVISO SOBRE O ACESSO DEMO: "{TEXTO_ACESSO_DEMO}"
- HISTÓRICO RECENTE:
- {memoria}
- O QUE O CLIENTE DISSE AGORA: "{texto_completo}"
- # DIRETRIZES ESTRITAS DE RESPOSTA (SIGA ESTA ORDEM):
- 0. REGRA SUPREMA (FILTRO DE RECUSA):
- Analise a frase INTEIRA do cliente.
- Se ele disser "não temos interesse", "no momento não", "não quero", "já tenho", "agradeço mas não":
- -> IGNORE qualquer "Bom dia" ou "Tudo bem" que vier junto.
- -> Vá direto para a regra 3 (DESINTERESSE).
- 1. SE FOR FASE DE INTERESSE (E não houver recusa):
- (Ex: "Sim", "Quem é", "Pode falar", "Bom dia, como funciona?"):
- - Comece com uma frase humana e acolhedora (ex: "Que maravilha!").
- - Explique o SistemClass usando os tópicos (bullets).
- - Entregue o Usuário, Senha e Link de Teste.
- - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_ACESSO_DEMO}"
- - OBRIGATÓRIO: Ao final, ofereça as duas opções: falar agora com o Comercial pelo WhatsApp 🟢 (31) 99341-3530 OU agendar uma apresentação on-line de 30 minutos pelo link {LINK_AGENDAMENTO} (apenas texto, não gere links formatados).
- 2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
- 2.1. SE O CLIENTE PEDIR APRESENTAÇÃO, DEMONSTRAÇÃO AO VIVO, REUNIÃO, CALL OU FALAR EM "AGENDAR":
- - Envie o link de agendamento: {LINK_AGENDAMENTO}
- - Explique que ele escolhe o melhor dia e horário, a apresentação é on-line de 30 minutos e o link da reunião chega no e-mail dele na hora (apenas texto, não gere links formatados).
- 3. SE FOR DESINTERESSE:
- - Responda apenas: "Entendido! Agradeço o retorno e desejo muito sucesso. Um abraço! 👋"
- - NÃO tente vender nada.
- IMPORTANTE: JAMAIS escreva "Passo A:", "Passo B:". Apenas o texto corrido.
- """
-            try:
-                time.sleep(1)
-                response = model.generate_content(instrucoes_base)
-                resposta_bot = response.text.strip()
-                # limpeza de rótulos indesejados
-                resposta_bot = (resposta_bot
-                                .replace("**Passo A**", "").replace("Passo A:", "")
-                                .replace("**Passo B**", "").replace("Passo B:", ""))
-                print(f"--- [MARIA CLARA] {resposta_bot}")
-                historico_conversas[sender_user].append(f"Maria Clara: {resposta_bot}")
-                enviar_mensagem(sender_user, resposta_bot)
-            except Exception as e:
-                print(f"Erro Gemini: {e}")
 
     except Exception as e:
         print(f"--- [ERRO GERAL] {e}")
