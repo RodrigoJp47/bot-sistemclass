@@ -16,3 +16,8 @@ env/
 *.xlsx
 
 ngrok.txt
+
+wpp_profile/
+wpp_profile_antigo/
+lista_clientes.xlsx
+pausados.json

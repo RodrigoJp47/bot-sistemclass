@@ -1,6 +1,7 @@
 
 
 
+
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
 import requests
@@ -68,33 +69,87 @@ clientes_pausados = carregar_pausados()
 # ==============================================================================
 DADOS_ACESSO = f"""
 Link: {LINK_LANDING}
-Usuário: Teste@cliente
-Senha: @Jp20261
+Usuário: SistemClass_2026
+Senha: @Jp123456
 """
 
-TEXTO_TESTE_7_DIAS = """
-💡 Dica: Caso queira testar com seus próprios dados, você tem 7 dias grátis!
-Não precisa de cartão de crédito. Basta clicar em "Cadastre-se" na página de login e sua senha é liberada na hora com apenas seu e-mail.
+TEXTO_ACESSO_DEMO = """
+💡 Importante: este é um acesso de demonstração compartilhado, com dados fictícios, para você explorar o sistema por dentro à vontade.
+Por gentileza, não altere a senha. Se quiser um ambiente exclusivo para testar com seus próprios dados, é só me avisar que nosso time libera para você! 😊
 """
 
 TOPICOS_APRESENTACAO = """
-1. O QUE É: Ferramenta de Gestão 3 em 1 (ERP modelo SaaS). Resolve todas as dores do BPO Financeiro num só lugar.
-2. BENEFÍCIOS: Elimina contratação de várias ferramentas, reduz custos, otimiza tempo. Sem limite mínimo de licenças.
-3. FUNCIONALIDADES CHAVE:
- - Gestão Interna: Gestão de contratos e tarefas (estilo Trello/Playbpo).
- - Gestão Operacional: Contas a pagar/receber, conciliação, notas fiscais.
- - Gestão Estratégica (BI): Dashboards em tempo real, DRE Gerencial, Fluxo de Caixa, KPIs e Valuation automático.
-4. DIFERENCIAIS: API com Conta Azul, Omie, Nibo. Geração de insights e laudos financeiros.
+1. O QUE É: SaaS de gestão empresarial multiempresa (ERP) voltado para pequenas e médias empresas brasileiras. Reúne num único ambiente os módulos Financeiro, Comercial, Fiscal, Contábil e BPO, com IA integrada.
+
+2. MÓDULO FINANCEIRO (todos os planos):
+ - Contas a Pagar e Receber com recorrência automática, classificação por Área DRE, Centro de Custo e Projeto.
+ - DRE Gerencial completa (Receita Bruta → Lucro Líquido), análise vertical e horizontal, regime competência ou caixa.
+ - Fluxo de Caixa Analítico com gráfico de evolução e saldo projetado.
+ - Painel Financeiro com Valuation automático, Ponto de Equilíbrio e KPIs avançados.
+ - Laudo Financeiro gerado por IA (Google Gemini) com um clique.
+ - Conciliação Bancária via importação OFX com matching automático.
+ - Agendamento de pagamentos via API bancária (Inter, Asaas, Cora).
+
+3. MÓDULO BPO FINANCEIRO (plano exclusivo para escritórios):
+ - Multi-CNPJ: um único login gerencia todos os clientes da carteira.
+ - Acessa e opera o sistema em nome de qualquer cliente com um clique, sem trocar senha.
+ - Dashboard BPO com visão consolidada da carteira, alertas e indicadores.
+ - Contratos BPO com cálculo automático de rentabilidade por cliente.
+ - Registro de tempo da equipe por cliente (Desempenho da Equipe).
+ - Análise de Carteira e Desempenho com IA: ranking, alertas e recomendações.
+ - Agente BPO Automático (robô): sincroniza APIs bancárias, concilia transações e gera relatório Excel por cliente automaticamente.
+
+4. AGENTES INTELIGENTES (IA):
+ - Agente WhatsApp (LIA): captura boletos e notas fiscais enviados via WhatsApp, extrai dados com IA e cria rascunhos de lançamento para aprovação.
+ - Agente de E-mail: monitora caixa de entrada (Gmail, Outlook, Yahoo), lê e-mails de fornecedores e cria rascunhos automaticamente.
+ - Classificação Automática: o sistema aprende com o histórico e sugere Categoria, DRE, Centro de Custo e Projeto para novos lançamentos.
+ - LIA (assistente financeira): responde dúvidas sobre lançamentos, detecta duplicatas e sugere classificações em lote.
+
+5. MÓDULO COMERCIAL (plano Pro Comercial e acima):
+ - PDV (frente de caixa), Orçamentos, Vendas, CRM/Pipeline, Estoque, Metas e Precificação.
+ - Laudo Comercial e Laudo Marketplace com IA.
+
+6. MÓDULO FISCAL (plano Elite Fiscal):
+ - Emissão de NF-e (produtos) via Focus NFe e NFS-e (serviços) via Asaas.
+ - Gestão de Contratos com geração automática de contas a receber.
+
+7. MÓDULO CONTÁBIL (add-on em qualquer plano):
+ - Balanço Patrimonial, Cofre de Documentos, Obrigações Fiscais e Painel Contábil BI.
+
+8. INTEGRAÇÕES DISPONÍVEIS:
+ - Bancos: Banco Inter, Itaú, Cora, Asaas, MercadoPago, Sicredi.
+ - ERPs: Conta Azul, Omie, Nibo, Tiny/Olist, Bling.
+ - Fiscal: Focus NFe (NF-e), Asaas (NFS-e).
+ - Comunicação: Z-API (WhatsApp), Google Gemini, Zoho Mail.
+
+9. DIFERENCIAIS GERAIS:
+ - Exportação universal em PDF e Excel em todas as páginas principais.
+ - Recorrência automática de lançamentos configurável por N meses.
+ - Tema claro/escuro em todas as páginas.
+ - Controle granular de permissões por colaborador e por módulo.
+ - Suporte direto pelo WhatsApp (31) 99341-3530.
 """
 
 INFO_PRODUTO = f"""
 REGRA DE OURO SOBRE PERSONALIZAÇÃO:
-- LOGO DO CLIENTE: Apenas para planos ACIMA DE 5 CNPJs.
+- LOGO DO CLIENTE: Apenas para planos ACIMA DE 5 CNPJs (BPO).
 - CORES (PALETA): NÃO fazemos personalização de cores sob nenhuma hipótese. O layout é padrão.
 
-PREÇOS (Apenas se perguntarem):
-- R$139/mês (Financeiro) ou R$189/mês (Comercial+Fiscal).
-- Descontos progressivos acima de 5 CNPJs.
+PREÇOS ATUAIS (Apenas se perguntarem):
+- Start Financeiro: R$ 169/mês — até 2 usuários. Módulo Financeiro completo.
+- Pro Comercial: R$ 219/mês — até 2 usuários. Tudo do Start + Módulo Comercial (PDV, Estoque, CRM, Metas).
+- Elite Fiscal: R$ 349/mês — até 2 usuários. Tudo do Pro + Módulo Fiscal (NF-e, NFS-e, Contratos).
+- BPO Financeiro: Sob consulta — multi-CNPJ. Plano especial para escritórios que gerenciam múltiplos clientes.
+- Módulo Contábil: Add-on disponível em qualquer plano (valor sob consulta).
+
+LIMITE DE USUÁRIOS: Todos os planos individuais incluem até 2 usuários. Usuários adicionais sob consulta.
+
+NOTAS FISCAIS (Elite Fiscal):
+- NF-e: Limite de 100 notas/mês incluídas. Excedente cobrado a R$ 0,25/nota. Requer Certificado Digital A1 (.pfx).
+- NFS-e: Configurada pela equipe SistemClass via subconta Asaas.
+
+AGENDAMENTO BANCÁRIO:
+- Disponível para Inter, Asaas e Cora. Os pagamentos exigem aprovação no app do banco pelo cliente.
 """
 
 # ==============================================================================
@@ -406,7 +461,7 @@ def webhook():
  {INFO_PRODUTO}
  DADOS DE ACESSO (PARA ENTREGAR AO CLIENTE):
  {DADOS_ACESSO}
- AVISO IMPORTANTE (7 DIAS): "{TEXTO_TESTE_7_DIAS}"
+ AVISO SOBRE O ACESSO DEMO: "{TEXTO_ACESSO_DEMO}"
  HISTÓRICO RECENTE:
  {memoria}
  O QUE O CLIENTE DISSE AGORA: "{texto_completo}"
@@ -421,7 +476,7 @@ def webhook():
  - Comece com uma frase humana e acolhedora (ex: "Que maravilha!").
  - Explique o SistemClass usando os tópicos (bullets).
  - Entregue o Usuário, Senha e Link de Teste.
- - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_TESTE_7_DIAS}"
+ - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_ACESSO_DEMO}"
  - OBRIGATÓRIO: Ao final, ofereça falar agora com o Comercial diretamente pelo WhatsApp 🟢: (31) 99341-3530 (apenas texto, não gere links).
  2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
  3. SE FOR DESINTERESSE:
