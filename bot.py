@@ -24,6 +24,7 @@ GEMINI_API_KEY   = os.environ.get("GEMINI_API_KEY")
 # ==============================================================================
 NOME_EMPRESA  = "SistemClass"
 LINK_LANDING  = "https://sistemclass.com.br"
+LINK_AGENDAMENTO = "https://sistemclass.zohobookings.com/#/sistemclass"
 
 
 # --- CONFIGURAÇÃO DE TRANSBORDO ---
@@ -477,8 +478,11 @@ def webhook():
  - Explique o SistemClass usando os tópicos (bullets).
  - Entregue o Usuário, Senha e Link de Teste.
  - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_ACESSO_DEMO}"
- - OBRIGATÓRIO: Ao final, ofereça falar agora com o Comercial diretamente pelo WhatsApp 🟢: (31) 99341-3530 (apenas texto, não gere links).
+ - OBRIGATÓRIO: Ao final, ofereça as duas opções: falar agora com o Comercial pelo WhatsApp 🟢 (31) 99341-3530 OU agendar uma apresentação on-line de 30 minutos pelo link {LINK_AGENDAMENTO} (apenas texto, não gere links formatados).
  2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
+ 2.1. SE O CLIENTE PEDIR APRESENTAÇÃO, DEMONSTRAÇÃO AO VIVO, REUNIÃO, CALL OU FALAR EM "AGENDAR":
+ - Envie o link de agendamento: {LINK_AGENDAMENTO}
+ - Explique que ele escolhe o melhor dia e horário, a apresentação é on-line de 30 minutos e o link da reunião chega no e-mail dele na hora (apenas texto, não gere links formatados).
  3. SE FOR DESINTERESSE:
  - Responda apenas: "Entendido! Agradeço o retorno e desejo muito sucesso. Um abraço! 👋"
  - NÃO tente vender nada.
