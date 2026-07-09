@@ -158,7 +158,7 @@ chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64
 def mensagem_formatada():
     """Retorna a mensagem com as quebras de linha preservadas."""
     return (
-        "Olá! Uma pergunta direta:\n\n"
+        "Oi! Aqui é a Maria Clara, da SistemClass. Vi que você atua com BPO Financeiro e uma pergunta direta:\n\n"
         "Quanto tempo sua equipe gasta por mês montando relatórios financeiros pros clientes?\n\n"
         "Desenvolvemos um sistema que automatiza isso — DRE, Fluxo de Caixa e BI em tempo real. O cliente acessa sozinho, sem você precisar montar nada.\n\n"
         "Posso te dar um acesso teste gratuito agora?"
@@ -229,8 +229,8 @@ def disparar_selenium():
         except Exception as e:
             print(f"⚠️ Falha ao enviar para {nome}. O número pode não ter WhatsApp ou a página demorou a carregar.")
 
-        # Intervalo de segurança para evitar banimento (entre 45 e 80 segundos)
-        intervalo = random.randint(45, 80)
+        # Intervalo de segurança para evitar banimento (entre 10 e 15 minutos)
+        intervalo = random.randint(600, 900)
         print(f"⏳ Aguardando {intervalo}s para o próximo envio...\n")
         time.sleep(intervalo)
 
