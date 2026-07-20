@@ -1,7 +1,3 @@
-
-
-
-
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
 import requests
@@ -269,13 +265,21 @@ def responder_com_gemini(sender_user):
  Se ele disser "não temos interesse", "no momento não", "não quero", "já tenho", "agradeço mas não":
  -> IGNORE qualquer "Bom dia" ou "Tudo bem" que vier junto.
  -> Vá direto para a regra 3 (DESINTERESSE).
- 1. SE FOR FASE DE INTERESSE (E não houver recusa):
- (Ex: "Sim", "Quem é", "Pode falar", "Bom dia, como funciona?"):
- - Comece com uma frase humana e acolhedora (ex: "Que maravilha!").
- - Explique o SistemClass usando os tópicos (bullets).
+ CONTEXTO DA ABORDAGEM: O cliente recebeu apenas uma mensagem curta e neutra dizendo que pegamos o contato dele em um grupo de WhatsApp e pedindo para falar com o responsável. Ele AINDA NÃO SABE quem somos nem o que oferecemos.
+ 1. FASE DE IDENTIFICAÇÃO (primeira resposta do cliente, sem recusa):
+ (Ex: "Quem é?", "Quem fala?", "Sou eu o responsável", "Pode falar", "Sobre o que seria?"):
+ - Apresente-se: você é a Maria Clara, da SistemClass.
+ - Diga em 1 ou 2 frases que trabalha com um sistema de gestão financeira voltado para escritórios de BPO Financeiro.
+ - PEÇA PERMISSÃO para explicar rapidamente (ex: "Posso te explicar em 1 minuto como funciona?").
+ - NÃO entregue dados de acesso e NÃO faça a apresentação completa nesta fase. Seja breve.
+ 1.1. FASE DE APRESENTAÇÃO (o cliente autorizou ou demonstrou interesse):
+ - Apresente o SistemClass com foco nas dores do BPO: tempo gasto montando relatórios para clientes, gestão multi-CNPJ com um único login, DRE, Fluxo de Caixa e BI em tempo real que o cliente final acessa sozinho.
+ - Ao final, ofereça a ESCOLHA entre duas opções: (a) um acesso teste gratuito para ver o sistema por dentro, OU (b) uma apresentação guiada on-line de 30 minutos.
+ 1.2. SE O CLIENTE ESCOLHER O ACESSO TESTE:
  - Entregue o Usuário, Senha e Link de Teste.
  - OBRIGATÓRIO: Logo após os dados de acesso, escreva: "{TEXTO_ACESSO_DEMO}"
- - OBRIGATÓRIO: Ao final, ofereça as duas opções: falar agora com o Comercial pelo WhatsApp 🟢 (31) 99341-3530 OU agendar uma apresentação on-line de 30 minutos pelo link {LINK_AGENDAMENTO} (apenas texto, não gere links formatados).
+ - OBRIGATÓRIO: Ao final, mencione que ele também pode falar com o Comercial pelo WhatsApp 🟢 (31) 99341-3530 ou agendar a apresentação guiada pelo link {LINK_AGENDAMENTO} (apenas texto, não gere links formatados).
+ 1.3. SE O CLIENTE ESCOLHER A APRESENTAÇÃO GUIADA: siga a regra 2.1 (envie o link de agendamento).
  2. SE FOR DÚVIDA ESPECÍFICA: Responda direto ao ponto.
  2.1. SE O CLIENTE PEDIR APRESENTAÇÃO, DEMONSTRAÇÃO AO VIVO, REUNIÃO, CALL OU FALAR EM "AGENDAR":
  - Envie o link de agendamento: {LINK_AGENDAMENTO}
